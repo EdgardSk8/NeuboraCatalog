@@ -35,9 +35,53 @@
     <meta name="twitter:title" content="Noubora Catalog — Inventario y catálogo para tu negocio" />
     <meta name="twitter:description" content="Organiza productos, existencias y movimientos de tu negocio y comparte un catálogo público con un solo enlace." />
     <meta name="twitter:image" content="https://nouboracatalog.pages.dev/og-image.png?v=2" />
+
+    <!-- Splash previo a React: el logo se ve desde el primer byte. -->
+    <style>
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: #f5faf8;
+        color: #77877d;
+        font: 500 12px/1.4 'Segoe UI', system-ui, sans-serif;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+      }
+      #boot-splash img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        animation: boot-pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 0.6; transform: scale(0.97); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+      #root:not(:empty) ~ #boot-splash {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash,
+        #boot-splash img {
+          transition: none;
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-splash" role="status" aria-live="polite">
+      <img src="/logo.png" alt="" width="96" height="96" />
+      <span>Cargando…</span>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

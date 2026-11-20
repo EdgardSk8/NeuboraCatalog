@@ -203,6 +203,12 @@ npx wrangler pages deploy dist --project-name nouboracatalog --branch preview
 npm run deploy:mailer
 ```
 
+> El proyecto está conectado a `EdgardSk8/NeuboraCatalog`, pero durante la puesta
+> en marcha los `git push` no dispararon builds. Si vuelve a ocurrir, revisa en
+> GitHub → Settings → Applications que la app de Cloudflare Pages tenga acceso al
+> repositorio, o despliega manualmente con `npm run build` y el comando
+> `wrangler pages deploy` de arriba.
+
 ### Migraciones en remoto
 
 ```powershell

@@ -18,7 +18,7 @@ Reglas del documento:
   en sus páginas públicas y corresponden a **facturación anual**; los planes
   mensuales suelen costar entre 15 % y 40 % más.
 - La comisión del 20 % sobre la tarifa de delivery ya está decidida en
-  `PLAN_INICIAL.md` y **se mantiene separada** de la suscripción.
+  `HANDOFF.md` y **se mantiene separada** de la suscripción.
 
 ## 1. Principios
 

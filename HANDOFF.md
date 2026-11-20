@@ -4,7 +4,7 @@
 > pueda continuar el proyecto **sin preguntar nada**: explica qué es, en qué
 > estado está, qué recursos de Cloudflare usa y qué decisiones ya están tomadas.
 >
-> Última actualización: 19 de noviembre de 2026.
+> Última actualización: 20 de noviembre de 2026.
 
 ---
 
@@ -28,7 +28,7 @@
 - **Noubora Catalog** es este producto: este repositorio. Tiene registro, login,
   inventario, catálogo y precios.
 - En la interfaz, el producto se llama Noubora Catalog y el pie de página dice
-  `© 2026 TellezSoftware`. El correo de contacto es `tellezsoftware@gmail.com`.
+  `© 2026 TellezSoftware`. El correo de contacto es `neuboracatalog@gmail.com`.
 
 ---
 
@@ -407,15 +407,22 @@ El dominio **no requiere un proyecto nuevo**. Pasos:
 5. Pedidos, delivery y liquidación (Fase 5).
 6. Reportes y exportación CSV.
 
+### Decisiones de negocio pendientes
+
+- **Antiabuso:** definir límites de intentos, Turnstile y/o verificación antes de abrir el registro.
+- **Delivery:** quién fija la tarifa, si el repartidor es usuario o empresa externa, frecuencia de liquidación y manejo de cancelaciones, devoluciones y pedidos parciales.
+- **Pedidos:** retiro en tienda desde el primer hito y compra como invitado o con cuenta obligatoria.
+- **Pagos:** comprobante/referencia para efectivo, billeteras y transferencias; procesador de tarjeta disponible en Nicaragua.
+- **Operación:** zona horaria, formato de fecha, impuestos, numeración y documentos fiscales de Nicaragua.
+- **Productos y tiendas:** campos obligatorios por rubro, unidades y serialización, reglas de publicación, datos públicos del vendedor y aprobación previa de tiendas.
+- **Expansión:** países y monedas después de Nicaragua.
+
 ---
 
 ## 14. Documentos de referencia
 
 | Documento | Contenido |
 | --- | --- |
-| [PLAN_INICIAL.md](./PLAN_INICIAL.md) | Documento maestro: arquitectura, reglas de negocio y roadmap |
-| [PLAN_TRABAJO.md](./PLAN_TRABAJO.md) | Fases con checklist de lo hecho y lo pendiente |
+| [DISENO.md](./DISENO.md) | Sistema visual único: escala de medidas, superficies, botones, animaciones y accesibilidad |
 | [PRICING.md](./PRICING.md) | Planes, precios, comparación de mercado y reglas de facturación |
-| [PREGUNTAS_PENDIENTES.md](./PREGUNTAS_PENDIENTES.md) | Decisiones que faltan y ya resueltas |
-| [arquitectura.md](./arquitectura.md) | Arquitectura visual: escala compacta de tamaños (espacio, tipografía, alturas, radios y scroll) |
 | [Guia-Google-OAuth-Cloudflare.md](./Guia-Google-OAuth-Cloudflare.md) | Guía paso a paso del OAuth |

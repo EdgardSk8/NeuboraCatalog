@@ -8,6 +8,15 @@ Pages.
 > el estado real, los recursos de Cloudflare con sus IDs, los pasos de despliegue
 > y las decisiones de negocio ya aprobadas.
 
+## Documentación
+
+| Documento | Contenido |
+| --- | --- |
+| [HANDOFF.md](./HANDOFF.md) | Estado real, recursos de Cloudflare, despliegue y decisiones aprobadas |
+| [DISENO.md](./DISENO.md) | Sistema visual reutilizable: medidas, contenedores, botones y animación |
+| [PRICING.md](./PRICING.md) | Planes, precios y reglas de facturación |
+| [Guia-Google-OAuth-Cloudflare.md](./Guia-Google-OAuth-Cloudflare.md) | Configurar Google OAuth en Cloudflare |
+
 ## Stack
 
 React 19 + TypeScript + Vite · Cloudflare Pages Functions (runtime de Workers) ·
@@ -67,4 +76,3 @@ npm test
 | `scripts/` | Aprovisionamiento de Cloudflare y pruebas de API local |
 | `tests/` | Pruebas con `node:test` |
 | `public/` | Logos, iconos, manifiesto y service worker |
-# NeuboraCatalog

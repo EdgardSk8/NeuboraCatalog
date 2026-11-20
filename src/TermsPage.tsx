@@ -67,7 +67,7 @@ const terms = {
         title: '8. Cambios y contacto',
         paragraphs: [
           'Podemos actualizar estas condiciones para reflejar cambios del servicio o requisitos aplicables. Indicaremos la nueva versión y fecha en esta página; los cambios materiales deberán comunicarse y, cuando corresponda, requerirán una nueva aceptación antes de seguir usando la función afectada.',
-          'Para preguntas o reclamaciones, contacta a tellezsoftware@gmail.com. Este canal no limita el derecho a acudir a las autoridades u otros mecanismos de reclamación disponibles conforme a la ley.',
+          'Para preguntas o reclamaciones, contacta a neuboracatalog@gmail.com. Este canal no limita el derecho a acudir a las autoridades u otros mecanismos de reclamación disponibles conforme a la ley.',
         ],
       },
       {
@@ -141,7 +141,7 @@ const terms = {
         title: '8. Changes and contact',
         paragraphs: [
           'We may update these terms to reflect service changes or applicable requirements. The new version and date will appear on this page; material changes should be communicated and, where required, accepted again before continuing to use the affected feature.',
-          'For questions or complaints, contact tellezsoftware@gmail.com. This channel does not limit your right to contact authorities or use other complaint mechanisms available under applicable law.',
+          'For questions or complaints, contact neuboracatalog@gmail.com. This channel does not limit your right to contact authorities or use other complaint mechanisms available under applicable law.',
         ],
       },
       {
@@ -202,7 +202,7 @@ export function TermsPage({ language: initialLanguage }: { language: Language })
     </article>
     <footer className="terms-footer">
       <span>© 2026 TellezSoftware</span>
-      <a href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a>
+      <a href="mailto:neuboracatalog@gmail.com">neuboracatalog@gmail.com</a>
     </footer>
   </main>
 }

@@ -275,7 +275,7 @@ const copy = {
           from: true,
           featured: false,
           cta: 'Hablar con ventas',
-          href: 'mailto:tellezsoftware@gmail.com',
+          href: 'mailto:neuboracatalog@gmail.com',
           features: [
             'Todo lo de Pro',
             '20,000 productos o más',
@@ -301,7 +301,7 @@ const copy = {
       legal: 'Legal',
       links: { features: 'Funciones', how: 'Cómo funciona', pricing: 'Precios', faq: 'Preguntas frecuentes', terms: 'Términos y condiciones' },
       rights: '© 2026 TellezSoftware',
-      contact: 'tellezsoftware@gmail.com',
+      contact: 'neuboracatalog@gmail.com',
     },
   },
   en: {
@@ -545,7 +545,7 @@ const copy = {
           from: true,
           featured: false,
           cta: 'Talk to sales',
-          href: 'mailto:tellezsoftware@gmail.com',
+          href: 'mailto:neuboracatalog@gmail.com',
           features: [
             'Everything in Pro',
             '20,000 products or more',
@@ -571,7 +571,7 @@ const copy = {
       legal: 'Legal',
       links: { features: 'Features', how: 'How it works', pricing: 'Pricing', faq: 'FAQ', terms: 'Terms and Conditions' },
       rights: '© 2026 TellezSoftware',
-      contact: 'tellezsoftware@gmail.com',
+      contact: 'neuboracatalog@gmail.com',
     },
   },
 }
@@ -1012,7 +1012,7 @@ function LandingFooter({ language }: { language: LandingLanguage }) {
         </a>
         <p>{t.tagline}</p>
         <p className="landing-footer-product">{t.productOf}</p>
-        <a className="landing-footer-mail" href="mailto:tellezsoftware@gmail.com"><Mail size={14} />{t.contact}</a>
+        <a className="landing-footer-mail" href="mailto:neuboracatalog@gmail.com"><Mail size={14} />{t.contact}</a>
       </div>
       <div className="landing-footer-col">
         <strong>{t.product}</strong>

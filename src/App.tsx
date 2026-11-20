@@ -1810,7 +1810,10 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     setAcceptedTerms(false)
   }
 
-  return <main className="flex min-h-screen flex-col bg-[#f5faf8] px-4 py-6 min-[851px]:px-6">
+  return <main
+    className="flex min-h-screen flex-col bg-[#f5faf8] px-4 py-6 min-[851px]:px-6"
+    style={{ backgroundImage: 'radial-gradient(900px 520px at 8% -5%, #e2f6ed 0%, transparent 62%), radial-gradient(700px 420px at 98% 100%, #f8e5f7 0%, transparent 60%), radial-gradient(520px 320px at 90% 8%, #f9ebea 0%, transparent 65%)' }}
+  >
     <div className="flex items-center justify-between">
       <a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a>
       <div className="flex items-center gap-4">
@@ -1820,15 +1823,26 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     </div>
     <div className="mx-auto my-6 grid w-full max-w-[1050px] flex-1 grid-cols-1 items-center gap-4 min-[851px]:grid-cols-[minmax(0,.9fr)_minmax(380px,1fr)] min-[851px]:gap-6">
       <section className="max-w-[400px] p-2.5 max-[850px]:hidden">
-        <div className="mb-6 grid size-24 place-items-center rounded-[24px] border border-[#d8f3e6] bg-gradient-to-br from-[#e2f6ed] to-[#f8e5f7] shadow-[0_14px_30px_-22px_#106a4080]"><img src="/logo.png" alt="" className="block size-16 object-contain" /></div>
-        <p className="eyebrow tracking-[1.2px] text-[#137748]">NOUBORA CATALOG</p>
+        <div className="mb-6 rounded-[24px] bg-[linear-gradient(135deg,#1db973_0%,#b91db1_52%,#b9251d_100%)] p-[1.5px] shadow-[0_14px_30px_-22px_#106a4080]">
+          <div className="grid size-24 place-items-center rounded-[22.5px] bg-[linear-gradient(135deg,#e2f6ed_0%,#f8e5f7_55%,#f8e5e4_100%)]">
+            <img src="/logo.png" alt="" className="block size-16 object-contain" />
+          </div>
+        </div>
+        <p className="eyebrow flex items-center gap-1.5 tracking-[1.2px] text-[#137748]">
+          <span className="size-1.5 rounded-full bg-[#1db973]" aria-hidden="true" />
+          <span className="size-1.5 rounded-full bg-[#b91db1]" aria-hidden="true" />
+          <span className="size-1.5 rounded-full bg-[#b9251d]" aria-hidden="true" />
+          NOUBORA CATALOG
+        </p>
         <h1 className="mb-3 max-w-[370px] auth-title leading-[1.18] tracking-[-1.1px]">{t.authTitle}</h1>
         <p className="mb-6 text-[13px] text-[#85938a]">{t.authSubtitle}</p>
-        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-white text-[#137748]"><Package size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{t.inventory}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Productos y existencias organizados' : 'Products and stock, organized'}</small></div></div>
-        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-white text-[#137748]"><Warehouse size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{language === 'es' ? 'Un espacio para tu negocio' : 'One workspace for your business'}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Tus datos privados y bajo tu control' : 'Your private data, under your control'}</small></div></div>
+        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-[#e2f6ed] text-[#106a40]"><Package size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{t.inventory}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Productos y existencias organizados' : 'Products and stock, organized'}</small></div></div>
+        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-[#f7e9f7] text-[#b91db1]"><Warehouse size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{language === 'es' ? 'Un espacio para tu negocio' : 'One workspace for your business'}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Tus datos privados y bajo tu control' : 'Your private data, under your control'}</small></div></div>
+        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-[#f9ebea] text-[#b9251d]"><ExternalLink size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{language === 'es' ? 'Catálogo público' : 'Public catalog'}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Comparte tu catálogo con un enlace' : 'Share your catalog with a link'}</small></div></div>
       </section>
-      <section className="w-full rounded-[26px] border border-[#e0eee7] bg-white px-4 py-4 shadow-[0_9px_35px_#26392d08] max-[620px]:px-3 max-[620px]:py-3" aria-labelledby="auth-heading">
-        <div className="mb-3 flex gap-3 border-b border-[#eef6f3]"><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'login' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#1db973] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('login')}>{t.signIn}</button><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'register' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#1db973] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('register')}>{t.register}</button></div>
+      <section className="relative w-full overflow-hidden rounded-[26px] border border-[#e0eee7] bg-white px-4 py-4 shadow-[0_9px_35px_#26392d08] max-[620px]:px-3 max-[620px]:py-3" aria-labelledby="auth-heading">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-10 top-0 h-[3px] rounded-b-full bg-[linear-gradient(90deg,#1db973_0%,#b91db1_50%,#b9251d_100%)]" />
+        <div className="mb-3 flex gap-3 border-b border-[#eef6f3]"><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'login' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[linear-gradient(90deg,#1db973,#b91db1,#b9251d)] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('login')}>{t.signIn}</button><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'register' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[linear-gradient(90deg,#1db973,#b91db1,#b9251d)] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('register')}>{t.register}</button></div>
         <h2 id="auth-heading" className="mb-1 text-[16px] font-bold tracking-[-.3px] text-[#34443b]">{mode === 'login' ? t.signIn : t.createWorkspace}</h2>
         <p className="mb-2.5 text-[10px] text-[#929e96]">{mode === 'login' ? t.welcomeBack : t.authSubtitle}</p>
         <button type="button" className="google-button" onClick={() => { void continueWithGoogle() }} disabled={googleBusy || busy || (mode === 'register' && !acceptedTerms)}>

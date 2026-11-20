@@ -1820,7 +1820,7 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     </div>
     <div className="mx-auto my-6 grid w-full max-w-[1050px] flex-1 grid-cols-1 items-center gap-4 min-[851px]:grid-cols-[minmax(0,.9fr)_minmax(380px,1fr)] min-[851px]:gap-6">
       <section className="max-w-[400px] p-2.5 max-[850px]:hidden">
-        <div className="mb-6 grid size-14 place-items-center rounded-[18px] border border-[#d8f3e6] bg-gradient-to-br from-[#e2f6ed] to-[#f8e5f7] text-[#106a40]"><Package size={32} /></div>
+        <div className="mb-6 grid size-24 place-items-center rounded-[24px] border border-[#d8f3e6] bg-gradient-to-br from-[#e2f6ed] to-[#f8e5f7] shadow-[0_14px_30px_-22px_#106a4080]"><img src="/logo.png" alt="" className="block size-16 object-contain" /></div>
         <p className="eyebrow tracking-[1.2px] text-[#137748]">NOUBORA CATALOG</p>
         <h1 className="mb-3 max-w-[370px] auth-title leading-[1.18] tracking-[-1.1px]">{t.authTitle}</h1>
         <p className="mb-6 text-[13px] text-[#85938a]">{t.authSubtitle}</p>

@@ -45,7 +45,10 @@ export default {
       return new Response('ok')
     } catch (error) {
       // Nunca registrar el contenido del correo ni el código de verificación.
-      console.error('Email send failed', error instanceof Error ? error.name : 'unknown')
+      const details = error instanceof Error
+        ? { name: error.name, message: error.message }
+        : { message: String(error) }
+      console.error('Email send failed', details)
       return new Response('Send failed', { status: 502 })
     }
   },

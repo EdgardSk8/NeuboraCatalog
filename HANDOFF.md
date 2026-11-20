@@ -89,8 +89,9 @@
 | `functions/api/` | Endpoints de Pages Functions |
 | `functions/_lib/` | `auth.ts`, `google.ts`, `http.ts`, `product-images.ts` |
 | `shared/` | Reglas y tipos compartidos: perfiles de negocio, categorías, términos |
-| `migrations/` | `0001` a `0008`, migraciones SQL |
+| `migrations/` | `0001` a `0009`, migraciones SQL |
 | `scripts/` | `provision-cloudflare.mjs` (infra) y `test-local-api.mjs` |
+| `workers/` | `mailer.js`: Worker interno que expone Email Sending a Pages |
 | `tests/` | Pruebas con `node:test` + `--experimental-strip-types` |
 | `public/` | Logo, iconos, manifiesto PWA y service worker |
 
@@ -336,6 +337,18 @@ Configuración de envío:
 5. En local, `wrangler pages dev` usa `send_email` y **simula** el envío: el
    código aparece en la consola (`send_email binding called with...`) y el
    correo se guarda en `.wrangler/tmp/email/...`.
+
+> **Bloqueo actual:** la cuenta de Cloudflare no tiene ninguna zona/dominio, así
+> que Email Sending no puede enviar desde `no-reply@noubora.com`. Mientras no se
+> conecte un dominio, las cuentas nuevas quedan con `email_verified = 0` y el
+> servidor rechaza sus escrituras. Para desbloquear una cuenta manualmente:
+>
+> ```powershell
+> npx wrangler d1 execute nouboracatalog --remote --command "UPDATE users SET email_verified = 1 WHERE email = 'correo@ejemplo.com'"
+> ```
+>
+> Cuando exista un dominio en Cloudflare, basta con habilitarlo para Email
+> Sending y volver a desplegar el Worker; el código ya está preparado.
 
 ---
 

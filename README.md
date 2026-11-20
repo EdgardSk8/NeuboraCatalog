@@ -4,6 +4,8 @@ Aplicación web de inventario y catálogo público para pequeños negocios. Es u
 producto de **TellezSoftware** y se publica de forma independiente en Cloudflare
 Pages.
 
+**Sitio en producción:** <https://nouboracatalog.pages.dev>
+
 > **Para retomar el proyecto, lee primero [HANDOFF.md](./HANDOFF.md).** Ahí está
 > el estado real, los recursos de Cloudflare con sus IDs, los pasos de despliegue
 > y las decisiones de negocio ya aprobadas.
@@ -74,5 +76,6 @@ npm test
 | `shared/` | Tipos y reglas compartidas entre frontend y backend |
 | `migrations/` | Migraciones SQL versionadas de D1 |
 | `scripts/` | Aprovisionamiento de Cloudflare y pruebas de API local |
+| `workers/` | Worker interno de correo (`nouboracatalog-mailer`) |
 | `tests/` | Pruebas con `node:test` |
 | `public/` | Logos, iconos, manifiesto y service worker |

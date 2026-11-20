@@ -17,16 +17,6 @@ echo   2) Local y red Wi-Fi  http://localhost:%PORT%  +  http://IP-DE-TU-PC:%POR
 echo   0) Salir
 echo.
 
-set /p "OPCION=Selecciona una opcion [1/2]: "
-
-if "%OPCION%"=="1" goto LOCAL
-if "%OPCION%"=="2" goto LAN
-if "%OPCION%"=="0" exit /b 0
-echo.
-echo Opcion no valida. Vuelve a ejecutar el archivo.
-pause
-exit /b 1
-
 where node >nul 2>&1
 if errorlevel 1 (
   echo.
@@ -34,6 +24,47 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+
+set /p "OPCION=Selecciona una opcion [1/2]: "
+
+rem Tolera espacios accidentales al escribir la opcion.
+set "OPCION=%OPCION: =%"
+
+if "%OPCION%"=="1" goto PREPARAR
+if "%OPCION%"=="2" goto PREPARAR
+if "%OPCION%"=="0" exit /b 0
+echo.
+echo Opcion no valida. Vuelve a ejecutar el archivo.
+pause
+exit /b 1
+
+:PREPARAR
+rem Un solo servidor a la vez: dos instancias comparten .wrangler\tmp y
+rem rompen el bundle de Functions ("Could not resolve middleware-loader").
+set "PID_EN_USO="
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr /r /c:":%PORT% .*LISTENING"') do set "PID_EN_USO=%%p"
+if defined PID_EN_USO (
+  echo.
+  echo El puerto %PORT% ya esta en uso por el proceso !PID_EN_USO!.
+  echo Puede ser otra ventana del servidor que quedo abierta.
+  set "RESPUESTA="
+  set /p "RESPUESTA=Cerrar ese proceso y continuar? [S/N]: "
+  set "RESPUESTA=!RESPUESTA: =!"
+  if /i not "!RESPUESTA!"=="S" (
+    echo.
+    echo Cierra la otra ventana del servidor y vuelve a intentar.
+    pause
+    exit /b 1
+  )
+  powershell -NoProfile -Command "Stop-Process -Id !PID_EN_USO! -Force" >nul 2>&1
+  timeout /t 2 /nobreak >nul
+)
+
+rem Restos de una ejecucion anterior: el bundle temporal se regenera solo.
+if exist ".wrangler\tmp" rmdir /s /q ".wrangler\tmp" >nul 2>&1
+
+if "%OPCION%"=="1" goto LOCAL
+goto LAN
 
 :LOCAL
 echo.

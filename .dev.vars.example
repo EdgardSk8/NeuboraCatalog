@@ -3,3 +3,9 @@
 # Google Cloud Console → APIs & Services → Credentials → OAuth client (Web application).
 GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=tu-client-secret
+
+# Remitente del código de confirmación (Cloudflare Email Sending).
+# El dominio debe estar habilitado en Email Sending: `npx wrangler email sending enable tudominio.com`.
+# En local, `wrangler pages dev` simula el envío y guarda el correo en archivos.
+MAIL_FROM=no-reply@noubora.com
+MAIL_FROM_NAME=Noubora Catalog

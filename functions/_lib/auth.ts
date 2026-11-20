@@ -1,4 +1,4 @@
-import { getCookie, fromHex, sha256, toHex } from './http'
+import { getCookie, fromHex, json, sha256, toHex } from './http'
 import type { BusinessType } from '../../shared/business-types'
 
 const SESSION_COOKIE = '__Host-tellez-session'
@@ -101,4 +101,16 @@ export async function getAuthenticatedSession(request: Request, db: D1Database):
     WHERE sessions.token_hash = ?1 AND sessions.expires_at > ?2
     LIMIT 1
   `).bind(tokenHash, now).first<AuthenticatedSession>()
+}
+
+/**
+ * Hasta confirmar el correo, la cuenta solo puede ver el panel: cualquier
+ * escritura sobre el servicio devuelve este 403.
+ */
+export function emailVerificationResponse(session: AuthenticatedSession): Response | null {
+  if (session.emailVerified) return null
+  return json({
+    error: 'Confirma tu correo electrónico para usar el servicio.',
+    code: 'email_not_verified',
+  }, 403)
 }

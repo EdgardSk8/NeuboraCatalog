@@ -1,4 +1,4 @@
-import { getAuthenticatedSession } from '../../_lib/auth'
+import { emailVerificationResponse, getAuthenticatedSession } from '../../_lib/auth'
 import { isSameOrigin, json, readJsonObject } from '../../_lib/http'
 
 type ProductStock = { id: string; name: string; quantity: number }
@@ -7,6 +7,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!isSameOrigin(request)) return json({ error: 'Solicitud de origen no permitido.' }, 403)
   const session = await getAuthenticatedSession(request, env.DB)
   if (!session) return json({ error: 'Inicia sesión para continuar.' }, 401)
+  const unverified = emailVerificationResponse(session)
+  if (unverified) return unverified
   if (!['owner', 'manager', 'staff'].includes(session.role)) return json({ error: 'No tienes permiso para ajustar existencias.' }, 403)
 
   const body = await readJsonObject(request)

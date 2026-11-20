@@ -1,4 +1,4 @@
-import { getAuthenticatedSession } from '../../_lib/auth'
+import { emailVerificationResponse, getAuthenticatedSession } from '../../_lib/auth'
 import { isSameOrigin, json, readJsonObject } from '../../_lib/http'
 import { inventoryProfileForBusinessType, isSelectableBusinessType } from '../../../shared/business-types'
 import { isCityForCountry, isCountryCode } from '../../../shared/locations'
@@ -8,6 +8,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   if (!isSameOrigin(request)) return json({ error: 'Solicitud de origen no permitido.' }, 403)
   const session = await getAuthenticatedSession(request, env.DB)
   if (!session) return json({ error: 'Inicia sesión para continuar.' }, 401)
+  const unverified = emailVerificationResponse(session)
+  if (unverified) return unverified
   if (session.role !== 'owner') return json({ error: 'Solo el propietario puede configurar esta cuenta.' }, 403)
 
   const body = await readJsonObject(request)

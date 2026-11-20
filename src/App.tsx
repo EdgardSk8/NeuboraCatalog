@@ -15,6 +15,7 @@ import {
   Info,
   LayoutDashboard,
   LogOut,
+  MailCheck,
   Menu,
   Package,
   Archive,
@@ -109,7 +110,7 @@ const copy = {
     email: 'Correo electrónico', password: 'Contraseña', signIn: 'Iniciar sesión', register: 'Crear cuenta', currency: 'Moneda',
     clothing: 'Ropa y calzado', hardware: 'Ferretería', solidGoods: 'Productos sólidos', personalProfile: 'Inventario personal',
     businessName: 'Nombre del negocio', createWorkspace: 'Crear cuenta', authTitle: 'Gestiona tu negocio con claridad',
-    setupAfterSignUp: 'Después de crear tu cuenta, configurarás tu negocio antes de entrar al panel.',
+    setupAfterSignUp: 'Después de confirmar tu correo, configurarás tu negocio.',
     accountConfigTitle: 'Configurar cuenta', accountConfigSub: 'Adapta el inventario a tu negocio y define cómo se mostrarán tus precios.',
     businessTypeHelp: 'Esto adapta las categorías y los campos sugeridos al agregar productos. Puedes comenzar y configurarlo aquí cuando estés listo.',
     currencyHelp: 'Esta moneda se usa para mostrar costos y precios. Solo se puede cambiar antes de registrar productos.',
@@ -120,7 +121,20 @@ const copy = {
     phone: 'Número de teléfono', phoneCountry: 'País del número', phoneNumber: 'Número', phoneHelp: 'Elige el país del número para agregar el prefijo correcto.', freeTrial: 'Prueba gratis · 7 días', paidPlan: 'Luego $5/mes · hasta 10 productos durante la prueba', trialEnded: 'Prueba terminada · plan de $5/mes', upgradeUnavailable: 'Los pagos aún no están habilitados. Contacta con soporte para activar el plan.',
     authSubtitle: 'Inventario y operaciones en un solo lugar.', noAccount: '¿Aún no tienes cuenta?', haveAccount: '¿Ya tienes cuenta?',
     createAccount: 'Regístrate', backToSignIn: 'Inicia sesión', passwordHint: 'Mínimo 12 caracteres.',
-    emailNotice: 'El correo aún no está verificado. La verificación y recuperación por email se habilitarán al configurar un proveedor de correo.',
+    verifyTitle: 'Confirma tu correo',
+    verifySub: 'Enviamos un código de 6 dígitos a {email}. Escríbelo para activar tu cuenta.',
+    verifyCode: 'Código de confirmación',
+    verifyAction: 'Confirmar correo',
+    verifyResend: 'Reenviar código',
+    verifyResendIn: 'Reenviar en {seconds} s',
+    verifySent: 'Te enviamos un código nuevo. Revisa tu correo.',
+    verifySendError: 'No se pudo enviar el código. Inténtalo de nuevo.',
+    verifySuccess: 'Correo confirmado. Ya puedes usar el servicio.',
+    verifyInvalid: 'Escribe los 6 dígitos del código.',
+    verifyLockedBody: 'La cuenta queda limitada al panel hasta confirmar el correo.',
+    verifyRequiredToUse: 'Confirma tu correo para usar el servicio.',
+    verifyResendHint: 'Revisa la carpeta de spam si no lo encuentras.',
+    verifyLocalHint: 'En local el correo no sale: el código se imprime en la consola de wrangler.',
     authUnavailable: 'No se pudo conectar al API de Pages. Ejecuta npm run dev:stack para usar autenticación local.',
     loading: 'Conectando...', account: 'Cuenta',
     available: 'Disponibles', attention: 'Necesitan atención', outOfStock: 'Agotados', recentProducts: 'Productos recientes',
@@ -183,7 +197,7 @@ const copy = {
     email: 'Email address', password: 'Password', signIn: 'Sign in', register: 'Create account', currency: 'Currency',
     clothing: 'Clothing & footwear', hardware: 'Hardware', solidGoods: 'Consumer goods', personalProfile: 'Personal inventory',
     businessName: 'Business name', createWorkspace: 'Create account', authTitle: 'Run your business with clarity',
-    setupAfterSignUp: 'After creating your account, you will set up your business before entering the dashboard.',
+    setupAfterSignUp: 'After confirming your email, you will set up your business.',
     accountConfigTitle: 'Configure account', accountConfigSub: 'Tailor your inventory to your business and choose how prices are displayed.',
     businessTypeHelp: 'This adapts suggested categories and fields when adding products. You can start now and set it here when you are ready.',
     currencyHelp: 'This currency is used to display costs and prices. It can only be changed before products are recorded.',
@@ -194,7 +208,20 @@ const copy = {
     phone: 'Phone number', phoneCountry: 'Phone country', phoneNumber: 'Number', phoneHelp: 'Choose the country for this number to add the correct calling code.', freeTrial: 'Free trial · 7 days', paidPlan: 'Then $5/month · up to 10 products during trial', trialEnded: 'Trial ended · $5/month plan', upgradeUnavailable: 'Payments are not enabled yet. Contact support to activate the plan.',
     authSubtitle: 'Inventory and operations in one place.', noAccount: "Don't have an account?", haveAccount: 'Already have an account?',
     createAccount: 'Sign up', backToSignIn: 'Sign in', passwordHint: 'At least 12 characters.',
-    emailNotice: 'Your email is not verified yet. Email verification and recovery will be enabled once an email provider is configured.',
+    verifyTitle: 'Confirm your email',
+    verifySub: 'We sent a 6-digit code to {email}. Enter it to activate your account.',
+    verifyCode: 'Confirmation code',
+    verifyAction: 'Confirm email',
+    verifyResend: 'Resend code',
+    verifyResendIn: 'Resend in {seconds}s',
+    verifySent: 'We sent a new code. Check your inbox.',
+    verifySendError: 'The code could not be sent. Try again.',
+    verifySuccess: 'Email confirmed. You can use the service now.',
+    verifyInvalid: 'Enter the 6 digits of the code.',
+    verifyLockedBody: 'The account stays limited to the dashboard until the email is confirmed.',
+    verifyRequiredToUse: 'Confirm your email to use the service.',
+    verifyResendHint: 'Check your spam folder if you cannot find it.',
+    verifyLocalHint: 'Locally the email is not sent: the code is printed in the wrangler console.',
     authUnavailable: 'Could not connect to the Pages API. Run npm run dev:stack to use local authentication.',
     loading: 'Connecting...', account: 'Account',
     available: 'Available', attention: 'Need attention', outOfStock: 'Out of stock', recentProducts: 'Recent products',
@@ -372,10 +399,12 @@ function categoryPlaceholder(businessType: BusinessType, language: Language): st
 
 class ApiResponseError extends Error {
   readonly status: number
+  readonly retryAfter: number | null
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, retryAfter: number | null = null) {
     super(message)
     this.status = status
+    this.retryAfter = retryAfter
   }
 }
 
@@ -397,7 +426,8 @@ async function requestApi(path: string, body?: unknown, method = body === undefi
     const message = isRecord(data) && typeof data.error === 'string'
       ? data.error
       : `La solicitud falló (HTTP ${response.status}).`
-    throw new ApiResponseError(message, response.status)
+    const retryAfter = isRecord(data) && typeof data.retryAfter === 'number' ? data.retryAfter : null
+    throw new ApiResponseError(message, response.status, retryAfter)
   }
   if (!isRecord(data)) throw new Error('El API devolvió una respuesta no válida.')
   return data
@@ -666,6 +696,108 @@ function stockState(product: Product): 'in' | 'low' | 'out' {
   return 'in'
 }
 
+// Solo para pruebas locales: `wrangler pages dev` simula el envío del correo.
+const isLocalHost = /^(?:localhost|127\.0\.0\.1|\[::1\])$/u.test(window.location.hostname)
+
+function EmailVerificationCard({ t, language, email, onVerified }: {
+  t: Texts
+  language: Language
+  email: string
+  onVerified: () => Promise<void>
+}) {
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = window.setTimeout(() => setCooldown((current) => Math.max(0, current - 1)), 1000)
+    return () => window.clearTimeout(timer)
+  }, [cooldown])
+
+  async function confirm(event: React.FormEvent) {
+    event.preventDefault()
+    if (busy || code.length !== 6) {
+      setError(t.verifyInvalid)
+      return
+    }
+    setBusy(true)
+    setError('')
+    setInfo('')
+    try {
+      await requestApi('/api/auth/verification/confirm', { code })
+      setInfo(t.verifySuccess)
+      await onVerified()
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.verifySendError)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function resend() {
+    if (sending || cooldown > 0) return
+    setSending(true)
+    setError('')
+    setInfo('')
+    try {
+      const result = await requestApi('/api/auth/verification/send', { language })
+      const retryAfter = isRecord(result) && typeof result.retryAfter === 'number' ? result.retryAfter : 60
+      setCooldown(retryAfter)
+      setInfo(t.verifySent)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.verifySendError)
+      if (requestError instanceof ApiResponseError && requestError.retryAfter) setCooldown(requestError.retryAfter)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <section className="panel verify-panel" aria-labelledby="verify-title">
+      <div className="verify-page-head">
+        <span className="verify-icon" aria-hidden="true"><MailCheck size={16} /></span>
+        <div className="verify-copy">
+          <h2 id="verify-title">{t.verifyTitle}</h2>
+          <p>{t.verifySub.replace('{email}', email)}</p>
+        </div>
+      </div>
+      <form className="verify-form" onSubmit={(event) => void confirm(event)}>
+        <label className="field verify-field">
+          <span>{t.verifyCode}</span>
+          <input
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/gu, '').slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="000000"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'verify-error' : undefined}
+          />
+        </label>
+        <div className="verify-actions">
+          <button type="submit" className="primary-button" disabled={busy || code.length !== 6}>
+            {busy ? t.loading : t.verifyAction}
+          </button>
+          <button type="button" className="outline-button" disabled={sending || cooldown > 0} onClick={() => void resend()}>
+            {cooldown > 0
+              ? t.verifyResendIn.replace('{seconds}', String(cooldown))
+              : sending ? t.loading : t.verifyResend}
+          </button>
+        </div>
+      </form>
+      {error && <p className="verify-message verify-error" id="verify-error" role="alert">{error}</p>}
+      {!error && info && <p className="verify-message" role="status">{info}</p>}
+      <p className="verify-hint">{t.verifyLockedBody} {t.verifyResendHint}</p>
+      {isLocalHost && <p className="verify-hint verify-hint-dev">{t.verifyLocalHint}</p>}
+    </section>
+  )
+}
+
 function WorkspaceApp() {
   const [language, setLanguage] = useState<Language>('es')
   const t = copy[language]
@@ -746,12 +878,26 @@ function WorkspaceApp() {
     }
   }, [productPageKey, query, showArchived, stockFilter, t.authUnavailable])
 
+  const unverified = Boolean(session && !session.user.emailVerified)
+  // Sin verificación no hay más pantalla que el panel.
+  const activePage: Page = unverified ? 'dashboard' : page
+
+  function blockIfUnverified(): boolean {
+    if (!unverified) return false
+    setToast(t.verifyRequiredToUse)
+    return true
+  }
+
   useEffect(() => {
     let active = true
     loadApiWorkspace().then((workspace) => {
       if (!active) return
       setSession(workspace.session)
-      if (!workspace.session.tenant.setupCompleted && workspace.session.tenant.role === 'owner') {
+      // Sin confirmar el correo la cuenta se queda en el panel: la
+      // configuración del negocio empieza después de la verificación.
+      if (workspace.session.user.emailVerified
+        && !workspace.session.tenant.setupCompleted
+        && workspace.session.tenant.role === 'owner') {
         setSetupName('')
         setSetupBusinessType(workspace.session.tenant.businessType)
         setSetupCurrency(workspace.session.tenant.currency)
@@ -813,6 +959,24 @@ function WorkspaceApp() {
     setWorkspaces(workspace.workspaces)
     setProfile(profileLabel(workspace.session.tenant.profile))
     setApiStatus('ready')
+    return workspace
+  }
+
+  async function completeVerification() {
+    // La sesión se actualiza al instante: la tarjeta desaparece aunque el
+    // refresco posterior falle.
+    setSession((current) => current
+      ? { ...current, user: { ...current.user, emailVerified: true } }
+      : current)
+    setToast(t.verifySuccess)
+    try {
+      const workspace = await refreshWorkspace()
+      if (!workspace.session.tenant.setupCompleted && workspace.session.tenant.role === 'owner') {
+        setPage('setup')
+      }
+    } catch {
+      setPage('dashboard')
+    }
   }
 
   async function signIn(email: string, password: string) {
@@ -822,14 +986,16 @@ function WorkspaceApp() {
   }
 
   async function register(email: string, password: string, acceptedTermsVersion: string) {
-    await requestApi('/api/auth/register', { email, password, acceptedTermsVersion })
+    await requestApi('/api/auth/register', { email, password, acceptedTermsVersion, language })
     await refreshWorkspace()
-    setPage('setup')
+    // La cuenta nace sin confirmar: solo dashboard hasta verificar el correo.
+    setPage('dashboard')
     if (showsSignIn) window.history.replaceState(null, '', '/')
   }
 
   async function completeSetup(skipLocation = false) {
     if (!session) return
+    if (blockIfUnverified()) return
     setSetupError('')
     setSetupBusy(true)
     try {
@@ -868,11 +1034,13 @@ function WorkspaceApp() {
   }
 
   async function saveAccountSettings(businessType: BusinessType, currency: string) {
+    if (blockIfUnverified()) return
     await requestApi('/api/workspaces/settings', { businessType, currency }, 'PATCH')
     await refreshWorkspace()
   }
 
   async function selectWorkspace(workspaceId: string) {
+    if (blockIfUnverified()) return
     if (workspaceId === session?.tenant.id) {
       setWorkspaceMenuOpen(false)
       return
@@ -892,6 +1060,7 @@ function WorkspaceApp() {
   }
 
   async function initializeBusinessWorkspaces() {
+    if (blockIfUnverified()) return
     setWorkspaceActionBusy(true)
     try {
       const result = await requestApi('/api/workspaces/initialize-types', {})
@@ -1022,6 +1191,7 @@ function WorkspaceApp() {
   }
 
   async function toggleProductArchive(product: Product) {
+    if (blockIfUnverified()) return
     const archived = !product.archivedAt
     if (archived && !window.confirm(language === 'es'
       ? `¿Archivar "${product.name}"? No aparecerá en el catálogo, pero podrás restaurarlo.`
@@ -1043,6 +1213,7 @@ function WorkspaceApp() {
   }
 
   async function openImageManager(product: Product) {
+    if (blockIfUnverified()) return
     setImageProduct(product)
     setProductImages([])
     setImageModalError('')
@@ -1102,11 +1273,19 @@ function WorkspaceApp() {
   }
 
   function editProduct(product: Product) {
+    if (blockIfUnverified()) return
     setEditingProduct(product)
     setModalOpen(true)
   }
 
+  function openNewProduct() {
+    if (blockIfUnverified()) return
+    setEditingProduct(null)
+    setModalOpen(true)
+  }
+
   async function adjustStock(productId: string, change: number, reason: string) {
+    if (blockIfUnverified()) return
     const product = products.find((item) => item.id === productId)
     if (!product) {
       setToast(language === 'es' ? 'No se encontró el producto seleccionado.' : 'The selected product was not found.')
@@ -1161,7 +1340,7 @@ function WorkspaceApp() {
     setToast(productsPersisted && movementsPersisted ? t.movementRecorded : t.storageError)
   }
 
-  const pageTitle = page === 'setup' ? t.setupTitle : t[page]
+  const pageTitle = activePage === 'setup' ? t.setupTitle : t[activePage]
   const canManageProducts = Boolean(session && ['owner', 'manager'].includes(session.tenant.role))
 
   if (showsLanding) {
@@ -1179,7 +1358,7 @@ function WorkspaceApp() {
     return <LandingPage language={language} onLanguageChange={setLanguage} />
   }
 
-  if (session && (!session.tenant.setupCompleted || page === 'setup')) {
+  if (session && session.user.emailVerified && (!session.tenant.setupCompleted || activePage === 'setup')) {
     return <WorkspaceSetupPage
       t={t} language={language} name={setupName} setName={setSetupName}
       phoneCountryCode={phoneCountryCode} setPhoneCountryCode={setPhoneCountryCode} customPhoneDialCode={customPhoneDialCode} setCustomPhoneDialCode={setCustomPhoneDialCode} phoneNumber={phoneNumber} setPhoneNumber={setPhoneNumber}
@@ -1196,7 +1375,7 @@ function WorkspaceApp() {
   return (
     <div className="flex h-dvh min-h-0 overflow-hidden text-xs">
       {sidebarOpen && <button className="mobile-backdrop" aria-label="Close menu" onClick={() => setSidebarOpen(false)} />}
-      <aside className={`relative z-20 flex h-dvh min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white px-2.5 pb-[9px] pt-[14px] max-[1100px]:w-[225px] max-[850px]:fixed max-[850px]:inset-y-0 max-[850px]:left-0 max-[850px]:w-[265px] max-[850px]:transition-transform max-[850px]:duration-200 max-[850px]:shadow-[7px_0_24px_#1b2b2017] ${sidebarOpen ? 'max-[850px]:translate-x-0' : 'max-[850px]:-translate-x-[105%]'}`}>
+      <aside className={`relative z-20 flex h-dvh min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white px-2.5 pb-2 pt-3 max-[1100px]:w-[225px] max-[850px]:fixed max-[850px]:inset-y-0 max-[850px]:left-0 max-[850px]:w-[265px] max-[850px]:transition-transform max-[850px]:duration-200 max-[850px]:shadow-[7px_0_24px_#1b2b2017] ${sidebarOpen ? 'max-[850px]:translate-x-0' : 'max-[850px]:-translate-x-[105%]'}`}>
         <div className="brand">
           <div className="brand-mark"><img src="/logo.png" alt="" /></div>
           <span>Noubora<span className="brand-light">Catalog</span></span>
@@ -1238,7 +1417,7 @@ function WorkspaceApp() {
             <div className="nav-group" key={group.label}>
               <p className="nav-caption">{t[group.label]}</p>
               {group.items.map(({ id, icon: Icon }) => (
-                <button key={id} onClick={() => { setPage(id); setSidebarOpen(false); setWorkspaceMenuOpen(false) }} className={`nav-item ${page === id ? 'nav-active' : ''}`}>
+                <button key={id} onClick={() => { if (blockIfUnverified()) return; setPage(id); setSidebarOpen(false); setWorkspaceMenuOpen(false) }} className={`nav-item ${activePage === id ? 'nav-active' : ''}`}>
                   <Icon size={18} strokeWidth={1.9} /><span>{t[id === 'setup' ? 'settings' : id]}</span>
                 </button>
               ))}
@@ -1261,7 +1440,7 @@ function WorkspaceApp() {
       </aside>
 
       <main className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 min-h-14 flex-[0_0_56px] items-center justify-between gap-3 border-b border-[var(--border)] bg-white/80 px-[18px] max-[1100px]:px-4 max-[850px]:h-[52px] max-[850px]:min-h-[52px] max-[850px]:basis-[52px] max-[850px]:px-3 max-[620px]:px-2 min-[1500px]:px-6">
+        <header className="flex h-14 min-h-14 flex-[0_0_56px] items-center justify-between gap-3 border-b border-[var(--border)] bg-white/80 px-4 max-[1100px]:px-4 max-[850px]:h-[52px] max-[850px]:min-h-[52px] max-[850px]:basis-[52px] max-[850px]:px-3 max-[620px]:px-2 min-[1500px]:px-6">
           <div className="topbar-left">
             <button className="menu-toggle icon-button" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Menu size={21} /></button>
             <div className="breadcrumbs"><span>{t.overview}</span><ChevronRight size={14} /><strong>{pageTitle}</strong></div>
@@ -1274,14 +1453,21 @@ function WorkspaceApp() {
           </div>
         </header>
 
-        <div className="flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain px-3.5 pb-2.5 pt-3.5 min-[851px]:px-[22px] min-[851px]:pb-3 min-[851px]:pt-[18px] min-[1500px]:px-7 max-[1100px]:px-4 max-[1100px]:pb-2.5 max-[1100px]:pt-4 max-[850px]:px-3.5 max-[850px]:pb-2.5 max-[850px]:pt-3.5 max-[620px]:px-2.5 max-[620px]:pb-2 max-[620px]:pt-3">
-          {session && !session.user.emailVerified && <div className="email-notice" role="status"><CircleHelp size={15} /><span>{t.emailNotice}</span></div>}
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain px-3 pb-2 pt-3 min-[851px]:px-4 min-[851px]:pt-4 max-[620px]:px-3">
+          {session && !session.user.emailVerified && (
+            <EmailVerificationCard
+              t={t}
+              language={language}
+              email={session.user.email}
+              onVerified={completeVerification}
+            />
+          )}
           {apiStatus === 'unavailable' && <div className="api-warning" role="status"><CircleHelp size={15} /><span>{t.authUnavailable}</span></div>}
-          {page === 'dashboard' && (
+          {activePage === 'dashboard' && (
             <>
               <div className="welcome-row">
                 <div><p className="eyebrow">{new Intl.DateTimeFormat(language === 'es' ? 'es-NI' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }).format(appStartedAt)}{session && <span className="business-type-badge">{businessTypeText(session.tenant.businessType, language)}</span>}</p><h1>{t.welcome}</h1><p className="page-subtitle">{session ? dashboardContext(session.tenant.businessType, language) : t.subtitle}</p></div>
-                <button className="primary-button" onClick={() => { setEditingProduct(null); setModalOpen(true) }}><Plus size={18} />{t.addProduct}</button>
+                <button className="primary-button" onClick={openNewProduct}><Plus size={18} />{t.addProduct}</button>
               </div>
               <section className="stats-grid" aria-label="Business summary">
                 <StatCard label={t.totalProducts} value={products.length.toString()} icon={<Package size={18} />} tone="mint" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
@@ -1291,33 +1477,33 @@ function WorkspaceApp() {
               </section>
               <div className="dashboard-grid">
                 <section className="panel inventory-overview">
-                  <div className="panel-heading"><div><h2>{t.stockOverview}</h2><p>{t.stockOverviewSub}</p></div><button className="subtle-button" onClick={() => setPage('inventory')}>{t.viewAll}<ChevronRight size={15} /></button></div>
+                  <div className="panel-heading"><div><h2>{t.stockOverview}</h2><p>{t.stockOverviewSub}</p></div><button className="subtle-button" onClick={() => { if (blockIfUnverified()) return; setPage('inventory') }}>{t.viewAll}<ChevronRight size={15} /></button></div>
                   <div className="stock-chart">
-                    <div className="donut-wrap"><div className="donut-chart" style={{ background: `conic-gradient(#4cd9a8 0 ${(products.length - lowProducts.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #e8b982 0 ${(products.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #d81b5e 0 100%)` }}><div><strong>{products.length}</strong><span>{t.products.toLowerCase()}</span></div></div></div>
+                    <div className="donut-wrap"><div className="donut-chart" style={{ background: `conic-gradient(#60c596 0 ${(products.length - lowProducts.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #e8b982 0 ${(products.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #bf3b34 0 100%)` }}><div><strong>{products.length}</strong><span>{t.products.toLowerCase()}</span></div></div></div>
                     <div className="stock-legend">
                       <LegendRow color="green" label={t.available} value={products.length - lowProducts.length - outProducts.length} />
                       <LegendRow color="orange" label={t.low} value={lowProducts.length} />
                       <LegendRow color="red" label={t.outOfStock} value={outProducts.length} />
                     </div>
                   </div>
-                  <div className="stock-note"><span className="note-dot" />{lowProducts.length + outProducts.length} {language === 'es' ? 'productos requieren tu atención' : 'products need your attention'}<button onClick={() => { setPage('inventory'); setStockFilter('low') }}>{language === 'es' ? 'Revisar' : 'Review'}<ArrowUpRight size={14} /></button></div>
+                  <div className="stock-note"><span className="note-dot" />{lowProducts.length + outProducts.length} {language === 'es' ? 'productos requieren tu atención' : 'products need your attention'}<button onClick={() => { if (blockIfUnverified()) return; setPage('inventory'); setStockFilter('low') }}>{language === 'es' ? 'Revisar' : 'Review'}<ArrowUpRight size={14} /></button></div>
                 </section>
                 <section className="panel quick-panel">
                   <div className="panel-heading"><div><h2>{t.quickActions}</h2><p>{t.quickActionsSub}</p></div></div>
-                  <button className="quick-action" onClick={() => setModalOpen(true)}><span className="quick-icon mint"><Plus size={18} /></span><span><strong>{t.newProduct}</strong><small>{language === 'es' ? 'Agrega un artículo a tu catálogo' : 'Add an item to your catalog'}</small></span><ChevronRight size={17} /></button>
-                  <button className="quick-action" onClick={() => { setPage('inventory'); setStockFilter('all'); setAdjustOpen(true) }}><span className="quick-icon blue"><Warehouse size={18} /></span><span><strong>{t.adjustStock}</strong><small>{language === 'es' ? 'Registra entradas y salidas' : 'Record stock in and out'}</small></span><ChevronRight size={17} /></button>
-                  <button className="quick-action" onClick={() => setPage('orders')}><span className="quick-icon peach"><ClipboardList size={18} /></span><span><strong>{t.createOrder}</strong><small>{language === 'es' ? 'Registra una nueva operación' : 'Record a new transaction'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={openNewProduct}><span className="quick-icon mint"><Plus size={18} /></span><span><strong>{t.newProduct}</strong><small>{language === 'es' ? 'Agrega un artículo a tu catálogo' : 'Add an item to your catalog'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('inventory'); setStockFilter('all'); setAdjustOpen(true) }}><span className="quick-icon blue"><Warehouse size={18} /></span><span><strong>{t.adjustStock}</strong><small>{language === 'es' ? 'Registra entradas y salidas' : 'Record stock in and out'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('orders') }}><span className="quick-icon peach"><ClipboardList size={18} /></span><span><strong>{t.createOrder}</strong><small>{language === 'es' ? 'Registra una nueva operación' : 'Record a new transaction'}</small></span><ChevronRight size={17} /></button>
                 </section>
               </div>
-              <ProductsTable products={products.slice(0, 5)} t={t} currency={session?.tenant.currency} onViewAll={() => setPage('products')} onManageImages={canManageProducts ? openImageManager : undefined} />
+              <ProductsTable products={products.slice(0, 5)} t={t} currency={session?.tenant.currency} onViewAll={() => { if (blockIfUnverified()) return; setPage('products') }} onManageImages={canManageProducts ? openImageManager : undefined} />
             </>
           )}
 
-          {page === 'products' && (
+          {activePage === 'products' && (
             <>
               <div className="welcome-row">
                 <div><p className="eyebrow">{t.management}</p><h1>{t.productList}</h1><p className="page-subtitle">{t.productListSub}</p></div>
-                <div className="inventory-actions">{canManageProducts && <button className="outline-button" onClick={() => { setShowArchived(!showArchived); setQuery(''); setStockFilter('all') }}>{showArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}{showArchived ? t.activeProducts : t.archivedProducts}</button>}{!showArchived && (!session || canManageProducts) && <button className="primary-button" onClick={() => { setEditingProduct(null); setModalOpen(true) }}><Plus size={18} />{t.addProduct}</button>}</div>
+                <div className="inventory-actions">{canManageProducts && <button className="outline-button" onClick={() => { setShowArchived(!showArchived); setQuery(''); setStockFilter('all') }}>{showArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}{showArchived ? t.activeProducts : t.archivedProducts}</button>}{!showArchived && (!session || canManageProducts) && <button className="primary-button" onClick={openNewProduct}><Plus size={18} />{t.addProduct}</button>}</div>
               </div>
               <div className="panel catalog-panel">
                 <div className="catalog-toolbar">
@@ -1332,9 +1518,9 @@ function WorkspaceApp() {
             </>
           )}
 
-          {page === 'inventory' && (
+          {activePage === 'inventory' && (
             <>
-              <div className="welcome-row"><div><p className="eyebrow">{t.operations}</p><h1>{t.inventoryTitle}</h1><p className="page-subtitle">{t.inventorySub}</p></div><div className="inventory-actions"><button className="outline-button" onClick={() => setAdjustOpen(true)}><SlidersHorizontal size={16} />{t.adjustInventory}</button><button className="primary-button" onClick={() => { setEditingProduct(null); setModalOpen(true) }}><Plus size={18} />{t.addProduct}</button></div></div>
+              <div className="welcome-row"><div><p className="eyebrow">{t.operations}</p><h1>{t.inventoryTitle}</h1><p className="page-subtitle">{t.inventorySub}</p></div><div className="inventory-actions"><button className="outline-button" onClick={() => { if (blockIfUnverified()) return; setAdjustOpen(true) }}><SlidersHorizontal size={16} />{t.adjustInventory}</button><button className="primary-button" onClick={openNewProduct}><Plus size={18} />{t.addProduct}</button></div></div>
               <div className="inventory-filter-row">{(['all', 'low', 'out'] as const).map((filter) => <button className={`inventory-filter ${stockFilter === filter ? 'filter-selected' : ''}`} onClick={() => setStockFilter(filter)} key={filter}>{filter === 'all' ? t.allStock : filter === 'low' ? `${t.lowStockTab} (${lowProducts.length})` : `${t.outTab} (${outProducts.length})`}</button>)}</div>
               <ProductsTable products={products.filter((item) => stockFilter === 'all' || stockState(item) === stockFilter)} t={t} currency={session?.tenant.currency} onManageImages={canManageProducts ? openImageManager : undefined} />
               <section className="panel movement-panel">
@@ -1344,7 +1530,7 @@ function WorkspaceApp() {
             </>
           )}
 
-          {page === 'settings' && session && (
+          {activePage === 'settings' && session && (
             <AccountSettingsPage
               key={session.tenant.id}
               t={t}
@@ -1353,7 +1539,7 @@ function WorkspaceApp() {
               onSave={saveAccountSettings}
             />
           )}
-          {!['dashboard', 'products', 'inventory', 'settings'].includes(page) && (
+          {!['dashboard', 'products', 'inventory', 'settings'].includes(activePage) && (
             <section className="coming-panel"><div className="coming-icon"><ClipboardList size={25} /></div><p className="eyebrow">{page === 'setup' ? t.setupTitle : t[page]}</p><h1>{t.comingSoon}</h1><p>{t.comingSoonHint}</p><button className="primary-button" onClick={() => setPage('dashboard')}>{t.dashboard}</button></section>
           )}
           <footer className="page-footer"><span>© 2026 TellezSoftware</span><span className="demo-indicator"><i />{session ? (language === 'es' ? 'Sesión autenticada · D1' : 'Authenticated session · D1') : (language === 'es' ? (apiStatus === 'unavailable' ? 'Modo demo local · API no disponible' : 'Prototipo local · datos de este navegador') : (apiStatus === 'unavailable' ? 'Local demo · API unavailable' : 'Local prototype · browser data'))}</span><nav aria-label={language === 'es' ? 'Información legal' : 'Legal information'}><a href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos' : 'Terms'}</a><a href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a></nav></footer>
@@ -1427,9 +1613,9 @@ function WorkspaceSetupPage({ t, language, name, setName, phoneCountryCode, setP
 }) {
   const selectedCountry = COUNTRIES.find((item) => item.code === country)
   const countryLabel = (item: typeof COUNTRIES[number]) => language === 'es' ? item.name : ({ NI: 'Nicaragua', CR: 'Costa Rica', HN: 'Honduras', SV: 'El Salvador', GT: 'Guatemala', US: 'United States', CA: 'Canada', MX: 'Mexico', OTHER: 'Other' }[item.code])
-  return <main className="flex min-h-screen flex-col gap-2 bg-[#f5fefa] px-[max(14px,calc((100vw-1000px)/2))] py-1.5">
-    <header className="flex items-center justify-between"><a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a><div className="flex items-center gap-4"><button type="button" className="inline-flex items-center gap-1.5 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[11px] font-semibold text-[#567a63] transition-colors hover:bg-[#e9fdf5] hover:text-[#3d6a4c]" onClick={onBack} aria-label={language === 'es' ? 'Volver a la pantalla de inicio de sesión' : 'Back to the sign-in screen'}><ArrowLeft size={14} />{language === 'es' ? 'Volver al inicio' : 'Back to start'}</button><button className="language-toggle" onClick={() => { document.documentElement.lang = language === 'es' ? 'en' : 'es'; window.location.reload() }} aria-label="Change language">{language === 'es' ? 'ES' : 'EN'} <ChevronDown size={13} /></button></div></header>
-    <section className="setup-card mx-auto w-full max-w-[1000px] rounded-[14px] border border-[#ddf1e9] bg-white p-3 shadow-[0_9px_35px_#26392d08]">
+  return <main className="flex min-h-screen flex-col gap-2 bg-[#f6fdfa] px-[max(16px,calc((100vw-1000px)/2))] py-1.5">
+    <header className="flex items-center justify-between"><a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a><div className="flex items-center gap-4"><button type="button" className="inline-flex items-center gap-1.5 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[11px] font-semibold text-[#567a63] transition-colors hover:bg-[#ecfaf3] hover:text-[#3d6a4c]" onClick={onBack} aria-label={language === 'es' ? 'Volver a la pantalla de inicio de sesión' : 'Back to the sign-in screen'}><ArrowLeft size={14} />{language === 'es' ? 'Volver al inicio' : 'Back to start'}</button><button className="language-toggle" onClick={() => { document.documentElement.lang = language === 'es' ? 'en' : 'es'; window.location.reload() }} aria-label="Change language">{language === 'es' ? 'ES' : 'EN'} <ChevronDown size={13} /></button></div></header>
+    <section className="setup-card mx-auto w-full max-w-[1000px] rounded-[14px] border border-[#e0eee7] bg-white p-3 shadow-[0_9px_35px_#26392d08]">
       <p className="eyebrow">{language === 'es' ? 'PASO 1 · CONFIGURACIÓN' : 'STEP 1 · SETUP'}</p>
       <h1 className="setup-title mb-1 font-bold tracking-[-.7px] text-[#34443b]">{t.setupTitle}</h1><p className="mb-2.5 text-[13px] text-[#829089]">{t.setupIntro}</p>
       <form className="grid grid-cols-2 gap-x-3 gap-y-1.5" onSubmit={(event) => { event.preventDefault(); onSubmit() }}>
@@ -1437,16 +1623,16 @@ function WorkspaceSetupPage({ t, language, name, setName, phoneCountryCode, setP
         <div className="field"><div className="flex items-center justify-between gap-1"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-business-type">{language === 'es' ? 'Tipo de negocio' : 'Business type'} *</label><HelpHint text={t.businessTypeHelp} language={language} /></div><select id="setup-business-type" value={businessType} onChange={(event) => { if (isSelectableBusinessType(event.target.value)) setBusinessType(event.target.value) }}>{BUSINESS_TYPES.map((type) => <option value={type} key={type}>{businessTypeText(type, language)}</option>)}</select></div>
         <div className="field"><div className="flex items-center justify-between gap-1"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-currency">{t.currency} *</label><HelpHint text={t.currencyHelp} language={language} /></div><select id="setup-currency" value={currency} onChange={(event) => setCurrency(event.target.value)}><option value="NIO">NIO — {language === 'es' ? 'Córdobas' : 'Nicaraguan córdobas'}</option><option value="USD">USD — {language === 'es' ? 'Dólares estadounidenses' : 'US dollars'}</option></select></div>
         <div className="field col-span-2"><div className="flex items-center justify-between"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-phone-country">{t.phone} *</label><HelpHint text={t.phoneHelp} language={language} /></div><div className="phone-input-row"><select id="setup-phone-country" aria-label={t.phoneCountry} value={phoneCountryCode} onChange={(event) => { if (isCountryCode(event.target.value)) setPhoneCountryCode(event.target.value) }}>{COUNTRIES.map((item) => <option key={item.code} value={item.code}>{language === 'es' ? item.name : item.code === 'MX' ? 'Mexico' : item.name} ({item.dialCode})</option>)}</select>{phoneCountryCode === 'OTHER' && <input className="phone-dial-code" aria-label={language === 'es' ? 'Prefijo internacional' : 'Calling code'} required value={customPhoneDialCode} onChange={(event) => setCustomPhoneDialCode(event.target.value)} placeholder="+XXX" maxLength={5} />}<input aria-label={t.phoneNumber} type="tel" required autoComplete="tel-national" inputMode="tel" maxLength={20} value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder={phoneCountryCode === 'NI' ? '8888 8888' : '555 123 4567'} /></div></div>
-        <div className="col-span-2 flex items-center justify-between border-t border-[#ecf7f2] pt-2"><h2 className="m-0 text-[16px] font-semibold">{t.location}</h2><HelpHint text={t.locationHelp} language={language} /></div>
+        <div className="col-span-2 flex items-center justify-between border-t border-[#edf6f2] pt-2"><h2 className="m-0 text-[16px] font-semibold">{t.location}</h2><HelpHint text={t.locationHelp} language={language} /></div>
         <label className="field"><span>{t.country}</span><select value={country} onChange={(event) => setCountry(isCountryCode(event.target.value) ? event.target.value : '')}><option value="">{t.chooseCountry}</option>{COUNTRIES.map((item) => <option key={item.code} value={item.code}>{countryLabel(item)}</option>)}</select></label>
         <label className="field"><span>{t.city}</span><select value={city} disabled={!selectedCountry} onChange={(event) => setCity(event.target.value)}><option value="">{t.chooseCity}</option>{selectedCountry?.cities.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         <label className="field col-span-2"><span>{t.address}</span><input maxLength={300} value={address} onChange={(event) => setAddress(event.target.value)} placeholder={t.addressPlaceholder} /></label>
-        <div className="col-span-2"><button className="outline-button" type="button" disabled={gpsBusy || busy} onClick={onGps}><ExternalLink size={15} />{gpsBusy ? t.gpsLoading : t.useGps}</button>{gpsMapUrl && <a className="ml-3 text-[11px] text-[#007a56]" href={gpsMapUrl} target="_blank" rel="noreferrer">{language === 'es' ? 'Ver ubicación en Google Maps' : 'View location in Google Maps'}</a>}</div>
+        <div className="col-span-2"><button className="outline-button" type="button" disabled={gpsBusy || busy} onClick={onGps}><ExternalLink size={15} />{gpsBusy ? t.gpsLoading : t.useGps}</button>{gpsMapUrl && <a className="ml-3 text-[11px] text-[#106a40]" href={gpsMapUrl} target="_blank" rel="noreferrer">{language === 'es' ? 'Ver ubicación en Google Maps' : 'View location in Google Maps'}</a>}</div>
         {error && <p className="form-error col-span-2" role="alert">{error}</p>}
         <div className="col-span-2 flex justify-between gap-3 pt-1"><button type="button" className="outline-button" disabled={busy} onClick={onSkip}>{t.skipLocation}</button><button type="submit" className="primary-button ml-auto" disabled={busy}>{busy ? t.loading : t.continueDashboard}<ChevronRight size={17} /></button></div>
       </form>
     </section>
-    <footer className="mx-auto flex w-full max-w-[700px] justify-between gap-3 text-[9px] text-[#9ba69f]"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#007a56] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a></footer>
+    <footer className="mx-auto flex w-full max-w-[700px] justify-between gap-3 text-[10px] text-[#9ba69f]"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a></footer>
   </main>
 }
 
@@ -1516,10 +1702,10 @@ function AccountSettingsPage({ t, language, tenant, onSave }: {
 
 function GoogleMark() {
   return <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
-    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65Z" />
-    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19Z" />
-    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
+    <path fill="#ea4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
+    <path fill="#4285f4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65Z" />
+    <path fill="#fbbc05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19Z" />
+    <path fill="#34a853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
   </svg>
 }
 
@@ -1624,27 +1810,27 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     setAcceptedTerms(false)
   }
 
-  return <main className="flex min-h-screen flex-col bg-[#f4fbf9] px-[clamp(18px,5vw,72px)] py-6">
+  return <main className="flex min-h-screen flex-col bg-[#f5faf8] px-4 py-6 min-[851px]:px-6">
     <div className="flex items-center justify-between">
       <a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a>
       <div className="flex items-center gap-4">
-        <a className="inline-flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-[11px] font-semibold text-[#567a63] no-underline transition-colors hover:bg-[#e9fdf5] hover:text-[#3d6a4c]" href="/" aria-label={language === 'es' ? 'Volver a la página de inicio' : 'Back to the home page'}><ArrowLeft size={14} />{language === 'es' ? 'Volver al inicio' : 'Back to start'}</a>
+        <a className="inline-flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-[11px] font-semibold text-[#567a63] no-underline transition-colors hover:bg-[#ecfaf3] hover:text-[#3d6a4c]" href="/" aria-label={language === 'es' ? 'Volver a la página de inicio' : 'Back to the home page'}><ArrowLeft size={14} />{language === 'es' ? 'Volver al inicio' : 'Back to start'}</a>
         <button className="language-toggle" onClick={() => onLanguageChange(language === 'es' ? 'en' : 'es')} aria-label="Change language">{language === 'es' ? 'ES' : 'EN'} <ChevronDown size={13} /></button>
       </div>
     </div>
-    <div className="mx-auto my-9 grid w-full max-w-[1050px] flex-1 grid-cols-1 items-center gap-5 min-[851px]:grid-cols-[minmax(0,.9fr)_minmax(380px,1fr)] min-[851px]:gap-[clamp(35px,8vw,100px)]">
+    <div className="mx-auto my-6 grid w-full max-w-[1050px] flex-1 grid-cols-1 items-center gap-4 min-[851px]:grid-cols-[minmax(0,.9fr)_minmax(380px,1fr)] min-[851px]:gap-6">
       <section className="max-w-[400px] p-2.5 max-[850px]:hidden">
-        <div className="mb-7 grid size-[61px] place-items-center rounded-[18px] border border-[#d3f8e8] bg-gradient-to-br from-[#defaf0] to-[#efe2fb] text-[#007a56]"><Package size={32} /></div>
-        <p className="eyebrow tracking-[1.2px] text-[#008a5e]">NOUBORA CATALOG</p>
+        <div className="mb-6 grid size-14 place-items-center rounded-[18px] border border-[#d8f3e6] bg-gradient-to-br from-[#e2f6ed] to-[#f8e5f7] text-[#106a40]"><Package size={32} /></div>
+        <p className="eyebrow tracking-[1.2px] text-[#137748]">NOUBORA CATALOG</p>
         <h1 className="mb-3 max-w-[370px] auth-title leading-[1.18] tracking-[-1.1px]">{t.authTitle}</h1>
-        <p className="mb-7 text-[13px] text-[#85938a]">{t.authSubtitle}</p>
-        <div className="mt-4 flex items-center gap-3"><span className="grid size-[34px] place-items-center rounded-[10px] bg-white text-[#008a5e]"><Package size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{t.inventory}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Productos y existencias organizados' : 'Products and stock, organized'}</small></div></div>
-        <div className="mt-4 flex items-center gap-3"><span className="grid size-[34px] place-items-center rounded-[10px] bg-white text-[#008a5e]"><Warehouse size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{language === 'es' ? 'Un espacio para tu negocio' : 'One workspace for your business'}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Tus datos privados y bajo tu control' : 'Your private data, under your control'}</small></div></div>
+        <p className="mb-6 text-[13px] text-[#85938a]">{t.authSubtitle}</p>
+        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-white text-[#137748]"><Package size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{t.inventory}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Productos y existencias organizados' : 'Products and stock, organized'}</small></div></div>
+        <div className="mt-4 flex items-center gap-3"><span className="grid size-8 place-items-center rounded-[10px] bg-white text-[#137748]"><Warehouse size={17} /></span><div className="flex flex-col gap-1"><strong className="text-[11px] text-[#526258]">{language === 'es' ? 'Un espacio para tu negocio' : 'One workspace for your business'}</strong><small className="text-[10px] text-[#96a199]">{language === 'es' ? 'Tus datos privados y bajo tu control' : 'Your private data, under your control'}</small></div></div>
       </section>
-      <section className="w-full rounded-[13px] border border-[#ddf1e9] bg-white px-7 py-6 shadow-[0_9px_35px_#26392d08] max-[620px]:px-3.5 max-[620px]:py-4" aria-labelledby="auth-heading">
-        <div className="mb-5 flex gap-[18px] border-b border-[#edf8f3]"><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'login' ? 'font-bold text-[#007a56] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#00c885] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('login')}>{t.signIn}</button><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'register' ? 'font-bold text-[#007a56] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#00c885] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('register')}>{t.register}</button></div>
-        <h2 id="auth-heading" className="mb-1 text-[18px] font-bold tracking-[-.3px] text-[#34443b]">{mode === 'login' ? t.signIn : t.createWorkspace}</h2>
-        <p className="mb-3 text-[10px] text-[#929e96]">{mode === 'login' ? t.welcomeBack : t.authSubtitle}</p>
+      <section className="w-full rounded-[26px] border border-[#e0eee7] bg-white px-4 py-4 shadow-[0_9px_35px_#26392d08] max-[620px]:px-3 max-[620px]:py-3" aria-labelledby="auth-heading">
+        <div className="mb-3 flex gap-3 border-b border-[#eef6f3]"><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'login' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#1db973] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('login')}>{t.signIn}</button><button type="button" className={`relative border-0 bg-transparent px-px pb-2.5 pt-2 text-[10px] ${mode === 'register' ? 'font-bold text-[#106a40] after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-[#1db973] after:content-[\"\"]' : 'text-[#93a097]'}`} onClick={() => changeMode('register')}>{t.register}</button></div>
+        <h2 id="auth-heading" className="mb-1 text-[16px] font-bold tracking-[-.3px] text-[#34443b]">{mode === 'login' ? t.signIn : t.createWorkspace}</h2>
+        <p className="mb-2.5 text-[10px] text-[#929e96]">{mode === 'login' ? t.welcomeBack : t.authSubtitle}</p>
         <button type="button" className="google-button" onClick={() => { void continueWithGoogle() }} disabled={googleBusy || busy || (mode === 'register' && !acceptedTerms)}>
           <GoogleMark />
           {googleBusy
@@ -1655,19 +1841,19 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
         {mode === 'login' && <small className="google-hint">{language === 'es' ? 'Al continuar con Google aceptas los ' : 'By continuing with Google you accept the '}<a href="/terminos">{language === 'es' ? 'Términos y condiciones' : 'Terms and conditions'}</a>.</small>}
         {(googleError || oauthErrorMessage) && <p className="form-error" role="alert">{googleError || oauthErrorMessage}</p>}
         <div className="auth-divider">{language === 'es' ? 'o' : 'or'}</div>
-        <form className="flex flex-col gap-3" onSubmit={submit}>
+        <form className="flex flex-col gap-2.5" onSubmit={submit}>
           {mode === 'register' && <small className="password-hint">{t.setupAfterSignUp}</small>}
           <label className="field"><span>{t.email} *</span><input autoFocus={mode === 'login'} required type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@ejemplo.com" /></label>
           <label className="field"><span>{t.password} *</span><input required type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'register' ? 12 : 1} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••••••" /><small className="password-hint">{mode === 'register' ? t.passwordHint : ''}</small></label>
           {mode === 'register' && <label className="terms-acceptance"><input type="checkbox" required checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span>{language === 'es' ? <>He leído y acepto los <a href="/terminos" target="_blank" rel="noreferrer">Términos y condiciones</a> (versión {CURRENT_TERMS_VERSION}).</> : <>I have read and agree to the <a href="/terminos?lang=en" target="_blank" rel="noreferrer">Terms and Conditions</a> (version {CURRENT_TERMS_VERSION}).</>}</span></label>}
           {error && <p className="form-error" role="alert">{error}</p>}
-          <button type="submit" className="primary-button mt-0.5 h-[39px] w-full justify-center disabled:cursor-wait disabled:opacity-70" disabled={busy}>{busy ? t.loading : mode === 'login' ? t.signIn : t.createWorkspace}<ChevronRight className="ml-auto" size={17} /></button>
+          <button type="submit" className="primary-button mt-0.5 h-9 w-full justify-center disabled:cursor-wait disabled:opacity-70" disabled={busy}>{busy ? t.loading : mode === 'login' ? t.signIn : t.createWorkspace}<ChevronRight className="ml-auto" size={17} /></button>
         </form>
-        <p className="mt-4 text-center text-[10px] text-[#87948b]">{mode === 'login' ? t.noAccount : t.haveAccount}<button className="ml-1 border-0 bg-transparent p-0 font-bold text-[#007a56]" onClick={() => changeMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? t.createAccount : t.backToSignIn}</button></p>
-        <p className="mt-[15px] text-center text-[9px] leading-[1.5] text-[#a1aaa4]">{language === 'es' ? 'Al crear una cuenta, tus datos se guardan en la base de datos configurada para esta aplicación.' : 'When you create an account, your data is saved in this application database.'}</p>
+        <p className="mt-3 text-center text-[10px] text-[#87948b]">{mode === 'login' ? t.noAccount : t.haveAccount}<button className="ml-1 border-0 bg-transparent p-0 font-bold text-[#106a40]" onClick={() => changeMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? t.createAccount : t.backToSignIn}</button></p>
+        <p className="mt-4 text-center text-[10px] leading-[1.5] text-[#a1aaa4]">{language === 'es' ? 'Al crear una cuenta, tus datos se guardan en la base de datos configurada para esta aplicación.' : 'When you create an account, your data is saved in this application database.'}</p>
       </section>
     </div>
-    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[9px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#007a56] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#007a56] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
+    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
   </main>
 }
 
@@ -1967,20 +2153,20 @@ function PublicCatalogPage({ slug }: { slug: string }) {
     }
   }
 
-  return <main className="flex min-h-screen flex-col bg-[#f5fefa] text-[#293a33]">
-    <header className="flex min-h-[66px] items-center justify-between border-b border-[#dff2ea] bg-white px-[max(22px,calc((100vw-1180px)/2))]"><a className="brand text-[#2b3c34] no-underline" href="/"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a><span className="text-[10px] font-bold uppercase tracking-[.08em] text-[#718078]">{t.store}</span></header>
-    <section className="mx-auto my-[45px] mb-7 w-[calc(100%-44px)] max-w-[1180px] rounded-xl border border-[#dff2ea] bg-gradient-to-br from-[#eff7f0] to-white px-[34px] py-[30px] max-[620px]:mt-6 max-[620px]:px-4 max-[620px]:py-5"><p className="eyebrow text-[#62846a]">{t.productList}</p><h1 className="mb-1 catalog-title">{store?.name ?? t.store}</h1><p className="m-0 text-xs text-[#839087]">{t.productListSub}</p></section>
+  return <main className="flex min-h-screen flex-col bg-[#f6fdfa] text-[#293a33]">
+    <header className="flex min-h-14 items-center justify-between border-b border-[#e2efe9] bg-white px-[max(16px,calc((100vw-1180px)/2))]"><a className="brand text-[#2b3c34] no-underline" href="/"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a><span className="text-[10px] font-bold uppercase tracking-[.08em] text-[#718078]">{t.store}</span></header>
+    <section className="mx-auto my-6 w-[calc(100%-44px)] max-w-[1180px] rounded-[26px] border border-[#e2efe9] bg-gradient-to-br from-[#eff7f0] to-white px-6 py-6 max-[620px]:px-4 max-[620px]:py-4"><p className="eyebrow text-[#62846a]">{t.productList}</p><h1 className="mb-1 catalog-title">{store?.name ?? t.store}</h1><p className="m-0 text-xs text-[#839087]">{t.productListSub}</p></section>
     <section className="mx-auto min-h-[300px] w-[calc(100%-44px)] max-w-[1180px] flex-1 max-[620px]:w-[calc(100%-28px)]" aria-label={t.productList}>
-      {loading && <div className="px-4 py-9 text-center text-xs text-[#77857c]" role="status">{t.loading}</div>}
-      {!loading && error && <div className="px-4 py-9 text-center text-xs text-[#9c5e56]" role="alert">{error || t.storeUnavailable}</div>}
-      {!loading && !error && items.length === 0 && <div className="px-4 py-9 text-center text-xs text-[#77857c]">{t.storeEmpty}</div>}
-      <div className="grid grid-cols-2 gap-2.5 min-[851px]:grid-cols-4 min-[1100px]:gap-4">{items.map((item) => <article className="overflow-hidden rounded-[10px] border border-[#dff2ea] bg-white transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_7px_22px_#26392d0b]" key={item.id}>
-        <div className="grid aspect-[4/3] place-items-center overflow-hidden bg-[#e9fdf5] text-[#85a58b]">{item.imageUrl ? <img className="block size-full object-cover" src={item.imageUrl} alt={item.name} loading="lazy" /> : <Package size={28} strokeWidth={1.4} />}</div>
-        <div className="p-3.5 max-[620px]:p-2.5"><span className="text-[9px] font-bold uppercase tracking-[.04em] text-[#76917c]">{item.category}</span><h2 className="mb-1 mt-1 text-sm leading-[1.4] text-[#34443b]">{item.name}</h2>{item.variant && <p className="mb-2.5 mt-0 text-[10px] text-[#87938c]">{item.variant}</p>}<strong className="text-sm text-[#007a56]">{new Intl.NumberFormat('es-NI', { style: 'currency', currency: store?.currency ?? 'NIO', maximumFractionDigits: 2 }).format(item.price)} <small className="text-[10px] font-normal text-[#87938c]">/ {item.unit}</small></strong></div>
+      {loading && <div className="px-4 py-6 text-center text-xs text-[#77857c]" role="status">{t.loading}</div>}
+      {!loading && error && <div className="px-4 py-6 text-center text-xs text-[#9c5e56]" role="alert">{error || t.storeUnavailable}</div>}
+      {!loading && !error && items.length === 0 && <div className="px-4 py-6 text-center text-xs text-[#77857c]">{t.storeEmpty}</div>}
+      <div className="grid grid-cols-2 gap-2.5 min-[851px]:grid-cols-4 min-[1100px]:gap-4">{items.map((item) => <article className="overflow-hidden rounded-[14px] border border-[#e2efe9] bg-white transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_7px_22px_#26392d0b]" key={item.id}>
+        <div className="grid aspect-[4/3] place-items-center overflow-hidden bg-[#ecfaf3] text-[#85a58b]">{item.imageUrl ? <img className="block size-full object-cover" src={item.imageUrl} alt={item.name} loading="lazy" /> : <Package size={28} strokeWidth={1.4} />}</div>
+        <div className="p-3 max-[620px]:p-2.5"><span className="text-[10px] font-bold uppercase tracking-[.04em] text-[#76917c]">{item.category}</span><h2 className="mb-1 mt-1 text-sm leading-[1.4] text-[#34443b]">{item.name}</h2>{item.variant && <p className="mb-2.5 mt-0 text-[10px] text-[#87938c]">{item.variant}</p>}<strong className="text-sm text-[#106a40]">{new Intl.NumberFormat('es-NI', { style: 'currency', currency: store?.currency ?? 'NIO', maximumFractionDigits: 2 }).format(item.price)} <small className="text-[10px] font-normal text-[#87938c]">/ {item.unit}</small></strong></div>
       </article>)}</div>
       {nextCursor && <div className="flex justify-center py-6"><button className="outline-button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? t.loading : t.loadMore}</button></div>}
     </section>
-    <footer className="mx-auto mt-[30px] flex min-h-16 w-[calc(100%-44px)] max-w-[1180px] items-center justify-between gap-3 border-t border-[#dff2ea] text-[10px] text-[#89968e] max-[620px]:w-[calc(100%-28px)] max-[620px]:flex-col max-[620px]:items-start max-[620px]:justify-center"><span>{t.storePowered}</span><nav className="flex gap-3.5"><a className="text-[#007a56] no-underline hover:underline" href="/terminos">Términos</a><a className="text-[#007a56] no-underline hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a></nav></footer>
+    <footer className="mx-auto mt-6 flex min-h-16 w-[calc(100%-44px)] max-w-[1180px] items-center justify-between gap-3 border-t border-[#e2efe9] text-[10px] text-[#89968e] max-[620px]:w-[calc(100%-28px)] max-[620px]:flex-col max-[620px]:items-start max-[620px]:justify-center"><span>{t.storePowered}</span><nav className="flex gap-3"><a className="text-[#106a40] no-underline hover:underline" href="/terminos">Términos</a><a className="text-[#106a40] no-underline hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a></nav></footer>
   </main>
 }
 

@@ -37,6 +37,9 @@
 ### Implementado y funcionando
 
 - Registro e inicio de sesión con correo y contraseña.
+- Verificación de correo con código de 6 dígitos: hasta confirmarlo, la cuenta
+  solo puede ver el panel y el API rechaza cualquier escritura (403
+  `email_not_verified`).
 - Inicio de sesión con Google (OAuth 2.0 con `state` de un solo uso y PKCE S256).
 - Sesiones en cookie `__Host-tellez-session` (HttpOnly, `Secure`, SameSite).
 - Multiempresa: `tenants`, `tenant_memberships`, roles y aislamiento por tenant
@@ -55,8 +58,7 @@
 
 ### Pendiente (no anunciar como existente)
 
-- Verificación de correo, recuperación y cambio de contraseña (no hay proveedor
-  de correo transaccional elegido).
+- Recuperación y cambio de contraseña (falta definir el flujo).
 - Protección antiabuso del registro (Turnstile, límites de intentos).
 - Pedidos, delivery, repartidores y liquidaciones (Fase 5 del plan).
 - Pasarela de pago y cobro de suscripciones.
@@ -243,6 +245,7 @@ confirmar que nadie la usa.
 | `0006_workspace_setup.sql` | Estado de configuración inicial |
 | `0007_phone_trial_plan.sql` | Teléfono y plan de prueba |
 | `0008_google_oauth.sql` | `oauth_accounts` (vínculo con Google por `sub`) |
+| `0009_email_verification.sql` | `email_verification_codes` (código de confirmación hasheado, vencimiento e intentos) |
 
 Reglas para quien continúe:
 
@@ -261,6 +264,8 @@ Reglas para quien continúe:
 | `/api/auth/login` | POST |
 | `/api/auth/logout` | POST |
 | `/api/auth/me` | GET |
+| `/api/auth/verification/send` | POST |
+| `/api/auth/verification/confirm` | POST |
 | `/api/auth/google/start` | POST |
 | `/api/auth/google/callback` | GET |
 | `/api/products` | GET, POST |
@@ -279,6 +284,34 @@ Reglas para quien continúe:
 
 Todas las rutas privadas verifican sesión **y** pertenencia al tenant en el
 servidor. Nunca confíes en el `tenant_id` que venga del cliente.
+
+Las rutas de escritura (productos, imágenes, inventario y espacios de trabajo)
+además exigen `users.email_verified = 1`: si el correo no está confirmado
+responden `403` con `code: "email_not_verified"`.
+
+### Verificación de correo
+
+- Al registrarse con correo y contraseña la cuenta nace con
+  `email_verified = 0` y se guarda un código de **6 dígitos** en
+  `email_verification_codes` (solo el hash SHA-256 con el `user_id` como sal).
+- El código se envía con Cloudflare Email Sending (`env.EMAIL`), vence en
+  **10 minutos**, admite **5 intentos** y se puede reenviar cada **60 segundos**
+  (máximo 5 envíos por hora).
+- Hasta confirmarlo la cuenta solo ve el panel: no hay acceso a configuración,
+  productos, inventario ni ajustes, y el servidor rechaza cualquier escritura.
+- Las cuentas creadas con Google ya vienen verificadas por Google.
+- Migración `0009`: las cuentas anteriores a la regla quedan marcadas como
+  verificadas para no bloquear a los usuarios existentes.
+
+Configuración de envío:
+
+1. Habilitar el dominio en Email Sending: `npx wrangler email sending enable noubora.com`.
+2. El binding `send_email` (`EMAIL`) ya está en `wrangler.jsonc` y `wrangler.local.jsonc`.
+3. Definir `MAIL_FROM` (por defecto `no-reply@noubora.com`) y `MAIL_FROM_NAME`.
+   En Pages: *Settings → Variables and Secrets*.
+4. En local, `wrangler pages dev` **simula** el envío: el código aparece en la
+   consola (`send_email binding called with...`) y el correo se guarda en
+   `.wrangler/tmp/email/...`.
 
 ---
 
@@ -311,6 +344,18 @@ servidor. Nunca confíes en el `tenant_id` que venga del cliente.
 - Producto: **Noubora Catalog**. Empresa: **TellezSoftware**.
 - El nombre del producto no se traduce (en inglés también es "Noubora Catalog").
 - El sitio corporativo no tiene login; los precios viven en el producto.
+- **Paleta propia de Noubora** (la anterior `#00C885` / `#8500C8` / `#C80043`
+  pertenecía a TellezSoftware):
+
+| Rol | Hex | Token |
+| --- | --- | --- |
+| Verde principal | `#1DB973` | `--brand` |
+| Magenta | `#B91DB1` | `--accent-magenta` |
+| Rojo | `#B9251D` | `--accent-red` |
+
+- Los neutros (tinta, grises, bordes) y los ámbar de aviso no cambian.
+- Los colores de Google (`#4285F4`, `#EA4335`, `#FBBC05`, `#34A853`) se
+  mantienen tal cual.
 
 ---
 
@@ -354,7 +399,8 @@ El dominio **no requiere un proyecto nuevo**. Pasos:
 
 ## 13. Próximos pasos sugeridos, en orden
 
-1. Correo transaccional (Resend, Postmark o similar) y verificación de correo.
+1. Recuperación y cambio de contraseña (la verificación de correo ya usa
+   Cloudflare Email Sending).
 2. Protección antiabuso del registro y del login (Turnstile + límites).
 3. Implementar planes y límites en D1 según `PRICING.md`.
 4. Pasarela de cobro o activación manual con comprobante.
@@ -371,5 +417,5 @@ El dominio **no requiere un proyecto nuevo**. Pasos:
 | [PLAN_TRABAJO.md](./PLAN_TRABAJO.md) | Fases con checklist de lo hecho y lo pendiente |
 | [PRICING.md](./PRICING.md) | Planes, precios, comparación de mercado y reglas de facturación |
 | [PREGUNTAS_PENDIENTES.md](./PREGUNTAS_PENDIENTES.md) | Decisiones que faltan y ya resueltas |
-| [arquitectura.md](./arquitectura.md) | Detalle de la arquitectura técnica |
+| [arquitectura.md](./arquitectura.md) | Arquitectura visual: escala compacta de tamaños (espacio, tipografía, alturas, radios y scroll) |
 | [Guia-Google-OAuth-Cloudflare.md](./Guia-Google-OAuth-Cloudflare.md) | Guía paso a paso del OAuth |

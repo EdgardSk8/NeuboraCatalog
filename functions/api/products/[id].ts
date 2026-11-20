@@ -1,4 +1,4 @@
-import { getAuthenticatedSession } from '../../_lib/auth'
+import { emailVerificationResponse, getAuthenticatedSession } from '../../_lib/auth'
 import { isSameOrigin, json, readJsonObject } from '../../_lib/http'
 
 type ProductRow = {
@@ -26,6 +26,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   if (!isSameOrigin(request)) return json({ error: 'Solicitud de origen no permitido.' }, 403)
   const session = await getAuthenticatedSession(request, env.DB)
   if (!session) return json({ error: 'Inicia sesión para continuar.' }, 401)
+  const unverified = emailVerificationResponse(session)
+  if (unverified) return unverified
   if (!['owner', 'manager'].includes(session.role)) {
     return json({ error: 'No tienes permiso para modificar productos.' }, 403)
   }

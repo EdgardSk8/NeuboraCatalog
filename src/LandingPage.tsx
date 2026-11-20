@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Boxes,
@@ -107,7 +107,7 @@ const copy = {
       eyebrow: 'COMPARACIÓN',
       title: 'Noubora Catalog vs lo que usas hoy',
       subtitle: 'Una sola herramienta para lo que hoy repartes entre cuadernos, Excel y fotos de WhatsApp.',
-      columns: ['Noubora Catalog', 'Excel', 'PDF / Fotos', 'Cuaderno'],
+      columns: ['Noubora', 'Excel', 'PDF / Fotos', 'Cuaderno'],
       rows: [
         { label: 'Actualización instantánea', values: ['yes', 'no', 'no', 'no'] },
         { label: 'Existencias y alertas de stock', values: ['yes', 'no', 'no', 'no'] },
@@ -143,7 +143,7 @@ const copy = {
         'Funciona en el navegador, sin instalar aplicaciones.',
       ],
       cta: 'Crear mi catálogo',
-      mock: { store: 'Calzado Casual', tag: 'Ropa y calzado', product: 'ASICS Japan Pro', price: '$105', available: 'Disponible' },
+      mock: { store: 'Calzado Casual', tag: 'Ropa y calzado', product: 'ASICS Japan Pro', price: '$105', available: 'Disponible', cart: 'Agregar al carrito' },
     },
     types: {
       eyebrow: 'HECHO PARA TU RUBRO',
@@ -377,7 +377,7 @@ const copy = {
       eyebrow: 'COMPARISON',
       title: 'Noubora Catalog vs what you use today',
       subtitle: 'One tool for what you now split across notebooks, Excel and WhatsApp photos.',
-      columns: ['Noubora Catalog', 'Excel', 'PDF / Photos', 'Notebook'],
+      columns: ['Noubora', 'Excel', 'PDF / Photos', 'Notebook'],
       rows: [
         { label: 'Instant updates', values: ['yes', 'no', 'no', 'no'] },
         { label: 'Stock levels and low-stock alerts', values: ['yes', 'no', 'no', 'no'] },
@@ -413,7 +413,7 @@ const copy = {
         'Runs in the browser, with nothing to install.',
       ],
       cta: 'Create my catalog',
-      mock: { store: 'Urban Wear', tag: 'Clothing', product: 'ASICS Japan Pro', price: '$105', available: 'Available' },
+      mock: { store: 'Urban Wear', tag: 'Clothing', product: 'ASICS Japan Pro', price: '$105', available: 'Available', cart: 'Add to cart' },
     },
     types: {
       eyebrow: 'BUILT FOR YOUR TRADE',
@@ -691,7 +691,7 @@ function Hero({ language }: { language: LandingLanguage }) {
   return <section className="landing-hero">
     <div className="landing-dots" aria-hidden="true" />
     <div className="landing-hero-inner">
-      <div className="landing-hero-copy">
+      <div className="landing-hero-copy" data-reveal>
         <span className="landing-badge"><Sparkles size={13} />{t.badge}</span>
         <h1 className="landing-h1">{t.titleA}<br /><span className="landing-highlight">{t.titleB}</span></h1>
         <p className="landing-lead">{t.subtitle}</p>
@@ -703,11 +703,11 @@ function Hero({ language }: { language: LandingLanguage }) {
           {t.notes.map((note) => <li key={note}><Check size={14} />{note}</li>)}
         </ul>
       </div>
-      <div className="landing-hero-visual">
+      <div className="landing-hero-visual" data-reveal style={{ '--i': 1 } as CSSProperties}>
         <DashboardPreview language={language} />
       </div>
     </div>
-    <div className="landing-proof">
+    <div className="landing-proof" data-reveal style={{ '--i': 2 } as CSSProperties}>
       <ul>
         {copy[language].proof.map(([value, label]) => <li key={value}><strong>{value}</strong><span>{label}</span></li>)}
       </ul>
@@ -726,7 +726,7 @@ function About({ language }: { language: LandingLanguage }) {
   const t = copy[language].about
   return <section className="landing-section landing-about" id="nosotros">
     <div className="landing-about-grid">
-      <div className="landing-about-copy">
+      <div className="landing-about-copy" data-reveal>
         <p className="landing-eyebrow">{t.eyebrow}</p>
         <h2 className="landing-h2">{t.title}</h2>
         <span className="landing-about-badge"><MapPin size={13} />{t.badge}</span>
@@ -735,28 +735,34 @@ function About({ language }: { language: LandingLanguage }) {
       <div className="landing-about-pillars">
         {t.pillars.map((pillar, index) => {
           const Icon = index === 0 ? Boxes : Store
-          return <article className="landing-pillar" key={pillar.title}>
-            <span className="landing-pillar-icon"><Icon size={20} /></span>
-            <div>
-              <h3>{pillar.title}</h3>
-              <p>{pillar.body}</p>
+          return <article className="landing-pillar landing-surface" key={pillar.title} data-reveal style={{ '--i': index } as CSSProperties}>
+            <span className="landing-surface-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <div className="landing-pillar-main">
+              <span className="landing-surface-icon landing-pillar-icon"><Icon size={18} /></span>
+              <div>
+                <h3>{pillar.title}</h3>
+                <p>{pillar.body}</p>
+              </div>
             </div>
+            <span className="landing-surface-accent" aria-hidden="true" />
           </article>
         })}
       </div>
     </div>
     <div className="landing-about-reasons">
-      <header className="landing-about-reasons-head">
+      <header className="landing-about-reasons-head" data-reveal>
         <h3>{t.reasons.title}</h3>
         <p>{t.reasons.subtitle}</p>
       </header>
       <ul className="landing-reasons">
         {t.reasons.items.map((reason, index) => {
           const Icon = aboutReasonIcons[index]
-          return <li key={reason.title}>
-            <span className="landing-reason-icon"><Icon size={17} /></span>
+          return <li className="landing-reason landing-surface" key={reason.title} data-reveal style={{ '--i': index } as CSSProperties}>
+            <span className="landing-surface-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <span className="landing-surface-icon landing-reason-icon"><Icon size={18} /></span>
             <strong>{reason.title}</strong>
             <p>{reason.body}</p>
+            <span className="landing-surface-accent" aria-hidden="true" />
           </li>
         })}
       </ul>
@@ -767,7 +773,7 @@ function About({ language }: { language: LandingLanguage }) {
 function Features({ language }: { language: LandingLanguage }) {
   const t = copy[language].features
   return <section className="landing-section" id="funciones">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -775,10 +781,12 @@ function Features({ language }: { language: LandingLanguage }) {
     <div className="landing-feature-grid">
       {t.items.map((item, index) => {
         const Icon = featureIcons[index]
-        return <article className="landing-feature" key={item.title}>
-          <span className="landing-feature-icon"><Icon size={20} /></span>
+        return <article className="landing-feature landing-surface" key={item.title} data-reveal style={{ '--i': index } as CSSProperties}>
+          <span className="landing-surface-icon landing-feature-icon"><Icon size={18} /></span>
+          <span className="landing-surface-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
           <h3>{item.title}</h3>
           <p>{item.body}</p>
+          <span className="landing-surface-accent" aria-hidden="true" />
         </article>
       })}
     </div>
@@ -793,7 +801,7 @@ function Comparison({ language }: { language: LandingLanguage }) {
     return <span className="landing-compare-no" title={t.no}><Minus size={15} /></span>
   }
   return <section className="landing-section landing-section-muted">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -801,15 +809,15 @@ function Comparison({ language }: { language: LandingLanguage }) {
     <div className="landing-compare-wrap">
       <table className="landing-compare">
         <thead>
-          <tr>
+          <tr data-reveal>
             <th scope="col"><span className="landing-sr">{language === 'es' ? 'Función' : 'Feature'}</span></th>
             {t.columns.map((column, index) => <th scope="col" key={column} className={index === 0 ? 'is-highlight' : ''}>{column}</th>)}
           </tr>
         </thead>
         <tbody>
-          {t.rows.map((row) => <tr key={row.label}>
+          {t.rows.map((row, index) => <tr key={row.label} data-reveal style={{ '--i': index + 1 } as CSSProperties}>
             <th scope="row">{row.label}</th>
-            {row.values.map((value, index) => <td key={`${row.label}-${index}`} className={index === 0 ? 'is-highlight' : ''}>{cell(value)}</td>)}
+            {row.values.map((value, cellIndex) => <td key={`${row.label}-${cellIndex}`} className={cellIndex === 0 ? 'is-highlight' : ''}>{cell(value)}</td>)}
           </tr>)}
         </tbody>
       </table>
@@ -821,7 +829,7 @@ function Comparison({ language }: { language: LandingLanguage }) {
 function Steps({ language }: { language: LandingLanguage }) {
   const t = copy[language].steps
   return <section className="landing-section" id="como-funciona">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -829,12 +837,13 @@ function Steps({ language }: { language: LandingLanguage }) {
     <ol className="landing-steps">
       {t.items.map((item, index) => {
         const Icon = stepIcons[index]
-        return <li className="landing-step" key={item.title}>
-          <span className="landing-step-icon"><Icon size={18} /></span>
-          <span className="landing-step-number">{String(index + 1).padStart(2, '0')}</span>
+        return <li className="landing-step landing-surface" key={item.title} data-reveal style={{ '--i': index } as CSSProperties}>
+          <span className="landing-surface-icon landing-step-icon"><Icon size={18} /></span>
+          <span className="landing-surface-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
           <h3>{item.title}</h3>
           <p>{item.body}</p>
           <span className="landing-step-tag">{item.tag}</span>
+          <span className="landing-surface-accent" aria-hidden="true" />
         </li>
       })}
     </ol>
@@ -844,7 +853,7 @@ function Steps({ language }: { language: LandingLanguage }) {
 function CatalogShowcase({ language }: { language: LandingLanguage }) {
   const t = copy[language].catalog
   return <section className="landing-section landing-catalog" id="catalogo">
-    <div className="landing-catalog-copy">
+    <div className="landing-catalog-copy landing-surface" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -853,7 +862,7 @@ function CatalogShowcase({ language }: { language: LandingLanguage }) {
       </ul>
       <StartLink language={language} className="landing-btn-lg" label={t.cta} />
     </div>
-    <div className="landing-catalog-visual">
+    <div className="landing-catalog-visual" data-reveal style={{ '--i': 1 } as CSSProperties}>
       <div className="landing-store">
         <div className="landing-store-head">
           <span className="landing-store-avatar">{t.mock.store.slice(0, 1)}</span>
@@ -861,11 +870,17 @@ function CatalogShowcase({ language }: { language: LandingLanguage }) {
           <span className="landing-store-badge"><Globe size={12} />{language === 'es' ? 'Público' : 'Public'}</span>
         </div>
         <div className="landing-store-body">
-          <div className="landing-store-image"><img src="/demo-product.jpg" alt={t.mock.product} /></div>
+          <div className="landing-store-image"><img src="/demo-product.png" alt={t.mock.product} /></div>
           <div className="landing-store-product">
-            <strong>{t.mock.product}</strong>
-            <span className="landing-store-price">{t.mock.price}</span>
+            <div className="landing-store-line">
+              <strong>{t.mock.product}</strong>
+              <span className="landing-store-price">{t.mock.price}</span>
+            </div>
             <span className="landing-store-available"><i />{t.mock.available}</span>
+            {/* Fachada: la tienda de la landing es una maqueta y no procesa compras. */}
+            <button type="button" className="landing-store-cart" tabIndex={-1} aria-hidden="true">
+              <ShoppingBag size={14} />{t.mock.cart}
+            </button>
           </div>
         </div>
         <div className="landing-store-foot"><Lock size={12} />{language === 'es' ? 'Solo productos con existencia' : 'In-stock products only'}</div>
@@ -878,7 +893,7 @@ function CatalogShowcase({ language }: { language: LandingLanguage }) {
 function BusinessTypes({ language }: { language: LandingLanguage }) {
   const t = copy[language].types
   return <section className="landing-section landing-section-muted">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -886,10 +901,12 @@ function BusinessTypes({ language }: { language: LandingLanguage }) {
     <div className="landing-types">
       {t.items.map((item, index) => {
         const Icon = typeIcons[index]
-        return <article className="landing-type" key={item.title}>
-          <span className="landing-type-icon"><Icon size={20} /></span>
+        return <article className="landing-type landing-surface" key={item.title} data-reveal style={{ '--i': index } as CSSProperties}>
+          <span className="landing-surface-icon landing-type-icon"><Icon size={18} /></span>
+          <span className="landing-surface-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
           <strong>{item.title}</strong>
           <p>{item.body}</p>
+          <span className="landing-surface-accent" aria-hidden="true" />
         </article>
       })}
     </div>
@@ -904,7 +921,7 @@ function Pricing({ language }: { language: LandingLanguage }) {
     plan.priceMonthly === 0 ? 0 : Math.round((1 - plan.priceAnnual / (plan.priceMonthly * 12)) * 100)
   const maxSaving = Math.max(...t.plans.map(savingPercent))
   return <section className="landing-section landing-pricing" id="precios">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
@@ -916,12 +933,12 @@ function Pricing({ language }: { language: LandingLanguage }) {
       </button>
     </div>
     <div className="landing-plans">
-      {t.plans.map((plan) => {
+      {t.plans.map((plan, index) => {
         const price = annual ? plan.priceAnnual : plan.priceMonthly
         const crc = annual ? plan.crcAnnual : plan.crcMonthly
         const percent = savingPercent(plan)
         const cycleLabel = annual ? t.perYear : t.perMonth
-        return <article className={`landing-plan${plan.featured ? ' is-featured' : ''}`} key={plan.name}>
+        return <article className={`landing-plan landing-surface${plan.featured ? ' is-featured' : ''}`} key={plan.name} data-reveal style={{ '--i': index } as CSSProperties}>
           {plan.featured && <span className="landing-plan-badge">{t.popular}</span>}
           <h3>{plan.name}</h3>
           <p className="landing-plan-tagline">{plan.tagline}</p>
@@ -951,12 +968,12 @@ function Faq({ language }: { language: LandingLanguage }) {
   const t = copy[language].faq
   const [openIndex, setOpenIndex] = useState<number | null>(0)
   return <section className="landing-section" id="preguntas">
-    <header className="landing-section-head">
+    <header className="landing-section-head" data-reveal>
       <p className="landing-eyebrow">{t.eyebrow}</p>
       <h2 className="landing-h2">{t.title}</h2>
       <p className="landing-section-sub">{t.subtitle}</p>
     </header>
-    <div className="landing-faq">
+    <div className="landing-faq" data-reveal>
       {t.items.map((item, index) => {
         const open = openIndex === index
         return <div className={`landing-faq-item ${open ? 'is-open' : ''}`} key={item.q}>
@@ -973,7 +990,7 @@ function Faq({ language }: { language: LandingLanguage }) {
 
 function FinalCta({ language }: { language: LandingLanguage }) {
   const t = copy[language].cta
-  return <section className="landing-cta">
+  return <section className="landing-cta" data-reveal>
     <p className="landing-eyebrow landing-eyebrow-light"><Sparkles size={12} />{language === 'es' ? 'EMPIEZA HOY' : 'START TODAY'}</p>
     <h2 className="landing-cta-title">{t.title}</h2>
     <p className="landing-cta-sub">{t.subtitle}</p>
@@ -1023,7 +1040,31 @@ function LandingFooter({ language }: { language: LandingLanguage }) {
 }
 
 export function LandingPage({ language, onLanguageChange }: { language: LandingLanguage; onLanguageChange: (language: LandingLanguage) => void }) {
-  return <div className="landing-page">
+  const pageRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const root = pageRef.current
+    if (!root || typeof IntersectionObserver === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const targets = root.querySelectorAll<HTMLElement>('[data-reveal]')
+    if (targets.length === 0) return
+
+    // Una sola pasada por elemento: al entrar en pantalla se quita el observador.
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        entry.target.classList.add('is-visible')
+        observer.unobserve(entry.target)
+      }
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' })
+
+    root.dataset.revealReady = 'true'
+    targets.forEach((target) => observer.observe(target))
+    return () => observer.disconnect()
+  }, [])
+
+  return <div className="landing-page" ref={pageRef}>
     <LandingNav language={language} onLanguageChange={onLanguageChange} />
     <main>
       <Hero language={language} />

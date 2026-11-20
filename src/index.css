@@ -1,5 +1,54 @@
 @import "tailwindcss";
 
+/* Escala compacta compartida: solo tamaños. La paleta vive en el tema. */
+:root {
+  /* Espacio: 2 · 4 · 6 · 8 · 10 · 12 · 16 · 24 */
+  --admin-esp-1: 2px;
+  --admin-esp-2: 4px;
+  --admin-esp-3: 6px;
+  --admin-esp-4: 8px;
+  --admin-esp-5: 10px;
+  --admin-esp-6: 12px;
+  --admin-esp-7: 16px;
+  --admin-esp-8: 24px;
+
+  /* Tipografía: 10 · 11 · 11.5 · 12 · 13 · 14 · 16 · 18 · 20 · 22 */
+  --admin-text-2xs: .625rem;
+  --admin-text-xs: .6875rem;
+  --admin-text-xs-plus: .72rem;
+  --admin-text-sm: .75rem;
+  --admin-text-md: .8125rem;
+  --admin-text-base: .875rem;
+  --admin-text-lg: 1rem;
+  --admin-text-xl: 1.125rem;
+  --admin-text-2xl: 1.25rem;
+  --admin-text-3xl: 1.35rem;
+
+  /* Alturas de control y áreas táctiles */
+  --admin-control-h: 36px;
+  --admin-control-h-field: 32px;
+  --admin-control-h-compact: 30px;
+  --admin-control-h-chip: 32px;
+  --admin-control-h-icon: 38px;
+  --admin-control-h-icon-mobile: 42px;
+  --admin-control-h-card: 32px;
+  --admin-control-h-touch: 44px;
+  --admin-nav-h: 56px;
+
+  /* Radios */
+  --admin-radius-control: 6px;
+  --admin-radius-compact: 10px;
+  --admin-radius-card: 14px;
+  --admin-radius-panel: 18px;
+  --admin-radius-hero: 26px;
+  --admin-radius-pill: 999px;
+
+  /* Interlineado */
+  --admin-leading-title: 1.2;
+  --admin-leading-body: 1.45;
+  --admin-leading-reading: 1.5;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,7 +56,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: #f4fbf9;
+  background: #f5faf8;
 }
 
 body {
@@ -15,17 +64,17 @@ body {
   min-height: 100vh;
   margin: 0;
   scrollbar-width: thin;
-  scrollbar-color: #00c885 transparent;
+  scrollbar-color: #1db973 transparent;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #00c885 transparent;
+  scrollbar-color: #1db973 transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 4px;
+  height: 4px;
 }
 
 *::-webkit-scrollbar-track {
@@ -33,26 +82,60 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
   border-radius: 999px;
-  background: #00c885;
-  background-clip: padding-box;
+  background: #1db973;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #008a5e;
-  background-clip: padding-box;
+  background: #137748;
+}
+
+.scroll-fino {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.scroll-fino::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scroll-fino::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-fino::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+.scroll-oculto {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.scroll-oculto::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS hace zoom en campos con texto menor a 16px. */
+@media (max-width: 575.98px) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
 }
 
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #00c885;
+  outline: 2px solid #1db973;
   outline-offset: 2px;
 }
 
 ::selection {
-  background: #b9f2da;
+  background: #c1ead7;
   color: #293a33;
 }

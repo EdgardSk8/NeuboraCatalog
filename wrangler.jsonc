@@ -17,6 +17,7 @@
       "bucket_name": "tellezsoftware-files-production"
     }
   ],
+  "send_email": [{ "name": "EMAIL" }],
   "env": {
     "preview": {
       "d1_databases": [

@@ -17,5 +17,6 @@
       "binding": "FILES",
       "bucket_name": "tellezsoftware-local-files"
     }
-  ]
+  ],
+  "send_email": [{ "name": "EMAIL" }]
 }

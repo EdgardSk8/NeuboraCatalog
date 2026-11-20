@@ -68,22 +68,54 @@ export function resolveSender(env: Env): { email: string; name: string } {
   return { email, name: name || DEFAULT_FROM_NAME }
 }
 
+type MailerPayload = {
+  to: string
+  from: { email: string; name: string }
+  subject: string
+  html: string
+  text: string
+}
+
+async function sendWithMailerWorker(env: Env, payload: MailerPayload): Promise<boolean> {
+  if (!env.MAILER) return false
+
+  try {
+    const response = await env.MAILER.fetch('https://nouboracatalog-mailer/send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (!response.ok) {
+      console.error('El Worker de correo rechazó el envío.', response.status)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error('No se pudo contactar al Worker de correo.', error instanceof Error ? error.name : 'unknown')
+    return false
+  }
+}
+
 export async function sendVerificationEmail(env: Env, to: string, code: string, language: string): Promise<boolean> {
   const message = buildVerificationEmail(code, language)
+  const payload: MailerPayload = {
+    to,
+    from: resolveSender(env),
+    subject: message.subject,
+    html: message.html,
+    text: message.text,
+  }
+
+  // Pages no admite `send_email`: en producción el envío pasa por el Worker.
+  if (env.MAILER) return sendWithMailerWorker(env, payload)
 
   if (!env.EMAIL) {
-    console.warn('La verificación de correo requiere el binding EMAIL (Cloudflare Email Sending).')
+    console.warn('La verificación de correo requiere el binding MAILER (producción) o EMAIL (local).')
     return false
   }
 
   try {
-    await env.EMAIL.send({
-      to,
-      from: resolveSender(env),
-      subject: message.subject,
-      html: message.html,
-      text: message.text,
-    })
+    await env.EMAIL.send(payload)
     return true
   } catch (error) {
     // Nunca registrar el código: es una credencial de un solo uso.

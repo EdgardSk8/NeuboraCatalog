@@ -13,6 +13,7 @@
     "infra:plan": "node scripts/provision-cloudflare.mjs",
     "infra:provision": "node scripts/provision-cloudflare.mjs --apply",
     "infra:check": "node scripts/provision-cloudflare.mjs --check",
+    "deploy:mailer": "wrangler deploy --config wrangler.mailer.jsonc",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:local:api": "node scripts/test-local-api.mjs",
     "build": "tsc -b && tsc --noEmit -p tsconfig.worker.json && vite build",

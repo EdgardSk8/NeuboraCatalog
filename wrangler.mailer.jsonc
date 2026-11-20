@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nouboracatalog-mailer",
+  "main": "workers/mailer.js",
+  "compatibility_date": "2026-11-12",
+  "workers_dev": false,
+  "send_email": [{ "name": "EMAIL" }]
+}

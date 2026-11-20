@@ -4,6 +4,9 @@ interface Env {
   // Cloudflare Email Sending. Sin este binding no se puede enviar el código
   // de confirmación y la cuenta queda pendiente de verificación.
   EMAIL?: SendEmail
+  // Producción: Pages no admite send_email, así que el correo pasa por este
+  // Worker interno con un service binding.
+  MAILER?: Fetcher
   MAIL_FROM?: string
   MAIL_FROM_NAME?: string
 }

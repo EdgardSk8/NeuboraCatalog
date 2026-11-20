@@ -117,13 +117,15 @@
 | D1 preview | `nouboracatalog-preview` | `ff212bee-ce8e-4490-a396-623b4c3a97a6` |
 | R2 producción | `nouboracatalog-files-production` | — |
 | R2 preview | `nouboracatalog-files-preview` | — |
+| Worker de correo | `nouboracatalog-mailer` | — |
 
 > Los recursos `tellezsoftware*` siguen existiendo como instalación anterior. La
 > aplicación nueva no comparte base de datos ni imágenes con ellos: empieza con
 > D1 y R2 vacíos.
 
-**Bindings en `wrangler.jsonc`:** `DB` (D1) y `FILES` (R2), con un bloque `env.preview`
-que apunta a los recursos de preview.
+**Bindings en `wrangler.jsonc`:** `DB` (D1), `FILES` (R2) y `MAILER` (service
+binding al Worker de correo), con un bloque `env.preview` que apunta a los
+recursos de preview.
 
 **Secretos del proyecto (no van en el repositorio):**
 
@@ -134,6 +136,10 @@ que apunta a los recursos de preview.
 > configurados en el proyecto nuevo. El registro e inicio de sesión con correo
 > funcionan; el botón de Google falla hasta añadirlos con `wrangler pages secret
 > put` y registrar el nuevo redirect URI en Google Cloud.
+
+**Correo:** Pages no admite `send_email` en su configuración. El Worker
+`nouboracatalog-mailer` tiene el binding `EMAIL` y Pages lo consume mediante el
+service binding `MAILER`.
 
 ### Enlaces al panel de Cloudflare
 
@@ -185,12 +191,15 @@ npm test        # node:test, 8 pruebas
 npx wrangler login
 npx wrangler pages project create nouboracatalog --production-branch main
 
-# Desplegar (la rama main va a producción)
+# Desplegar (la rama main va a producción; el proyecto está conectado a GitHub)
 npm run build
 npx wrangler pages deploy dist --project-name nouboracatalog --branch main
 
 # Rama de preview
 npx wrangler pages deploy dist --project-name nouboracatalog --branch preview
+
+# Worker interno de correo (solo si cambia workers/mailer.js)
+npm run deploy:mailer
 ```
 
 ### Migraciones en remoto
@@ -304,7 +313,9 @@ responden `403` con `code: "email_not_verified"`.
 - Al registrarse con correo y contraseña la cuenta nace con
   `email_verified = 0` y se guarda un código de **6 dígitos** en
   `email_verification_codes` (solo el hash SHA-256 con el `user_id` como sal).
-- El código se envía con Cloudflare Email Sending (`env.EMAIL`), vence en
+- El código se envía con Cloudflare Email Sending. En producción pasa por el
+  Worker `nouboracatalog-mailer` (service binding `MAILER`) porque Pages no
+  admite `send_email`; en local se usa `EMAIL` directamente. Vence en
   **10 minutos**, admite **5 intentos** y se puede reenviar cada **60 segundos**
   (máximo 5 envíos por hora).
 - Hasta confirmarlo la cuenta solo ve el panel: no hay acceso a configuración,
@@ -316,12 +327,15 @@ responden `403` con `code: "email_not_verified"`.
 Configuración de envío:
 
 1. Habilitar el dominio en Email Sending: `npx wrangler email sending enable noubora.com`.
-2. El binding `send_email` (`EMAIL`) ya está en `wrangler.jsonc` y `wrangler.local.jsonc`.
-3. Definir `MAIL_FROM` (por defecto `no-reply@noubora.com`) y `MAIL_FROM_NAME`.
+2. El Worker `nouboracatalog-mailer` declara el binding `send_email` (`EMAIL`) en
+   `wrangler.mailer.jsonc` y se despliega con `npm run deploy:mailer`.
+3. Pages consume el Worker con el service binding `MAILER` definido en
+   `wrangler.jsonc`.
+4. Definir `MAIL_FROM` (por defecto `no-reply@noubora.com`) y `MAIL_FROM_NAME`.
    En Pages: *Settings → Variables and Secrets*.
-4. En local, `wrangler pages dev` **simula** el envío: el código aparece en la
-   consola (`send_email binding called with...`) y el correo se guarda en
-   `.wrangler/tmp/email/...`.
+5. En local, `wrangler pages dev` usa `send_email` y **simula** el envío: el
+   código aparece en la consola (`send_email binding called with...`) y el
+   correo se guarda en `.wrangler/tmp/email/...`.
 
 ---
 

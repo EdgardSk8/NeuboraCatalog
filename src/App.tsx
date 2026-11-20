@@ -1432,7 +1432,7 @@ function WorkspaceApp() {
             {!session && <><div className="plan-meter"><span style={{ width: `${Math.min(products.length / 10 * 100, 100)}%` }} /></div><small>{products.length} / 10 {t.productsLimit} {t.used}</small></>}
             {session && <small>{products.length} {t.products.toLowerCase()}</small>}
           </div>
-          <button className="nav-item support-item" onClick={() => setToast('neuboracatalog@gmail.com')}><CircleHelp size={18} /><span>{t.help}</span></button>
+          <button className="nav-item support-item" onClick={() => setToast('tellezsoftware@gmail.com')}><CircleHelp size={18} /><span>{t.help}</span></button>
           <button className="user-profile" aria-label={session ? `${t.signOut}: ${session.user.email}` : t.account} onClick={session ? signOut : () => setToast(language === 'es' ? 'La gestión de cuenta estará disponible pronto' : 'Account management coming soon')}>
             <span className="user-avatar">{session ? session.user.email.slice(0, 2).toUpperCase() : 'ET'}</span><span className="user-copy"><strong>{session?.user.email ?? 'Edgard Tellez'}</strong><small>{session?.tenant.role ?? 'Administrador'}</small></span><LogOut size={17} className="muted-icon" />
           </button>
@@ -1542,7 +1542,7 @@ function WorkspaceApp() {
           {!['dashboard', 'products', 'inventory', 'settings'].includes(activePage) && (
             <section className="coming-panel"><div className="coming-icon"><ClipboardList size={25} /></div><p className="eyebrow">{page === 'setup' ? t.setupTitle : t[page]}</p><h1>{t.comingSoon}</h1><p>{t.comingSoonHint}</p><button className="primary-button" onClick={() => setPage('dashboard')}>{t.dashboard}</button></section>
           )}
-          <footer className="page-footer"><span>© 2026 TellezSoftware</span><span className="demo-indicator"><i />{session ? (language === 'es' ? 'Sesión autenticada · D1' : 'Authenticated session · D1') : (language === 'es' ? (apiStatus === 'unavailable' ? 'Modo demo local · API no disponible' : 'Prototipo local · datos de este navegador') : (apiStatus === 'unavailable' ? 'Local demo · API unavailable' : 'Local prototype · browser data'))}</span><nav aria-label={language === 'es' ? 'Información legal' : 'Legal information'}><a href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos' : 'Terms'}</a><a href="mailto:neuboracatalog@gmail.com">neuboracatalog@gmail.com</a></nav></footer>
+          <footer className="page-footer"><span>© 2026 TellezSoftware</span><span className="demo-indicator"><i />{session ? (language === 'es' ? 'Sesión autenticada · D1' : 'Authenticated session · D1') : (language === 'es' ? (apiStatus === 'unavailable' ? 'Modo demo local · API no disponible' : 'Prototipo local · datos de este navegador') : (apiStatus === 'unavailable' ? 'Local demo · API unavailable' : 'Local prototype · browser data'))}</span><nav aria-label={language === 'es' ? 'Información legal' : 'Legal information'}><a href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos' : 'Terms'}</a><a href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a></nav></footer>
         </div>
       </main>
       {modalOpen && <ProductModal key={session?.tenant.id ?? 'demo'} t={t} language={language} defaultProfile={profile} businessType={session?.tenant.businessType ?? 'general'} currency={session?.tenant.currency ?? 'NIO'} stockLocked={Boolean(session && editingProduct)} uploadEnabled={Boolean(session)} initialProduct={editingProduct ?? undefined} existingProducts={products} onClose={() => { setModalOpen(false); setEditingProduct(null) }} onSave={saveProduct} />}
@@ -1853,7 +1853,7 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
         <p className="mt-4 text-center text-[10px] leading-[1.5] text-[#a1aaa4]">{language === 'es' ? 'Al crear una cuenta, tus datos se guardan en la base de datos configurada para esta aplicación.' : 'When you create an account, your data is saved in this application database.'}</p>
       </section>
     </div>
-    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:neuboracatalog@gmail.com">neuboracatalog@gmail.com</a><span>Pages Functions + D1</span></footer>
+    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
   </main>
 }
 
@@ -2166,7 +2166,7 @@ function PublicCatalogPage({ slug }: { slug: string }) {
       </article>)}</div>
       {nextCursor && <div className="flex justify-center py-6"><button className="outline-button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? t.loading : t.loadMore}</button></div>}
     </section>
-    <footer className="mx-auto mt-6 flex min-h-16 w-[calc(100%-44px)] max-w-[1180px] items-center justify-between gap-3 border-t border-[#e2efe9] text-[10px] text-[#89968e] max-[620px]:w-[calc(100%-28px)] max-[620px]:flex-col max-[620px]:items-start max-[620px]:justify-center"><span>{t.storePowered}</span><nav className="flex gap-3"><a className="text-[#106a40] no-underline hover:underline" href="/terminos">Términos</a><a className="text-[#106a40] no-underline hover:underline" href="mailto:neuboracatalog@gmail.com">neuboracatalog@gmail.com</a></nav></footer>
+    <footer className="mx-auto mt-6 flex min-h-16 w-[calc(100%-44px)] max-w-[1180px] items-center justify-between gap-3 border-t border-[#e2efe9] text-[10px] text-[#89968e] max-[620px]:w-[calc(100%-28px)] max-[620px]:flex-col max-[620px]:items-start max-[620px]:justify-center"><span>{t.storePowered}</span><nav className="flex gap-3"><a className="text-[#106a40] no-underline hover:underline" href="/terminos">Términos</a><a className="text-[#106a40] no-underline hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a></nav></footer>
   </main>
 }
 

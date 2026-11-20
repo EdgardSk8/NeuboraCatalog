@@ -7,5 +7,10 @@ GOOGLE_CLIENT_SECRET=tu-client-secret
 # Remitente del código de confirmación (Cloudflare Email Sending).
 # El dominio debe estar habilitado en Email Sending: `npx wrangler email sending enable tudominio.com`.
 # En local, `wrangler pages dev` simula el envío y guarda el correo en archivos.
-MAIL_FROM=no-reply@noubora.com
+MAIL_FROM=tellezsoftware@gmail.com
 MAIL_FROM_NAME=Noubora Catalog
+
+# Relay de Gmail (Google Apps Script) para enviar la verificación sin dominio.
+# Despliega scripts/gmail-relay.gs y pega aquí la URL /exec y el secreto.
+# MAIL_RELAY_URL=https://script.google.com/macros/s/.../exec
+# MAIL_RELAY_SECRET=...

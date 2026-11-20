@@ -28,7 +28,7 @@
 - **Noubora Catalog** es este producto: este repositorio. Tiene registro, login,
   inventario, catálogo y precios.
 - En la interfaz, el producto se llama Noubora Catalog y el pie de página dice
-  `© 2026 TellezSoftware`. El correo de contacto es `neuboracatalog@gmail.com`.
+  `© 2026 TellezSoftware`. El correo de contacto es `tellezsoftware@gmail.com`.
 
 ---
 
@@ -138,9 +138,10 @@ recursos de preview.
 > funcionan; el botón de Google falla hasta añadirlos con `wrangler pages secret
 > put` y registrar el nuevo redirect URI en Google Cloud.
 
-**Correo:** Pages no admite `send_email` en su configuración. El Worker
-`nouboracatalog-mailer` tiene el binding `EMAIL` y Pages lo consume mediante el
-service binding `MAILER`.
+**Correo:** el canal principal es el relay de Gmail (`tellezsoftware@gmail.com`)
+en `scripts/gmail-relay.gs`, configurado con los secretos `MAIL_RELAY_URL` y
+`MAIL_RELAY_SECRET`. Pages no admite `send_email`; como alternativa con dominio
+propio queda el Worker `nouboracatalog-mailer` con el service binding `MAILER`.
 
 ### Enlaces al panel de Cloudflare
 
@@ -320,34 +321,43 @@ responden `403` con `code: "email_not_verified"`.
 - Al registrarse con correo y contraseña la cuenta nace con
   `email_verified = 0` y se guarda un código de **6 dígitos** en
   `email_verification_codes` (solo el hash SHA-256 con el `user_id` como sal).
-- El código se envía con Cloudflare Email Sending. En producción pasa por el
-  Worker `nouboracatalog-mailer` (service binding `MAILER`) porque Pages no
-  admite `send_email`; en local se usa `EMAIL` directamente. Vence en
-  **10 minutos**, admite **5 intentos** y se puede reenviar cada **60 segundos**
-  (máximo 5 envíos por hora).
+- El código se envía desde `tellezsoftware@gmail.com` mediante el relay de
+  Google Apps Script (`scripts/gmail-relay.gs`). Si el relay no está
+  configurado, se intenta el Worker `nouboracatalog-mailer` (Cloudflare Email
+  Sending, requiere dominio) y en local `EMAIL`. Vence en **10 minutos**, admite
+  **5 intentos** y se puede reenviar cada **60 segundos** (máximo 5 envíos por
+  hora).
 - Hasta confirmarlo la cuenta solo ve el panel: no hay acceso a configuración,
   productos, inventario ni ajustes, y el servidor rechaza cualquier escritura.
 - Las cuentas creadas con Google ya vienen verificadas por Google.
 - Migración `0009`: las cuentas anteriores a la regla quedan marcadas como
   verificadas para no bloquear a los usuarios existentes.
 
-Configuración de envío:
+Configuración de envío (Gmail):
 
-1. Habilitar el dominio en Email Sending: `npx wrangler email sending enable noubora.com`.
-2. El Worker `nouboracatalog-mailer` declara el binding `send_email` (`EMAIL`) en
-   `wrangler.mailer.jsonc` y se despliega con `npm run deploy:mailer`.
-3. Pages consume el Worker con el service binding `MAILER` definido en
-   `wrangler.jsonc`.
-4. Definir `MAIL_FROM` (por defecto `no-reply@noubora.com`) y `MAIL_FROM_NAME`.
-   En Pages: *Settings → Variables and Secrets*.
-5. En local, `wrangler pages dev` usa `send_email` y **simula** el envío: el
-   código aparece en la consola (`send_email binding called with...`) y el
-   correo se guarda en `.wrangler/tmp/email/...`.
+1. Desplegar `scripts/gmail-relay.gs` como Web App con la cuenta
+   `tellezsoftware@gmail.com`:
+   - Ejecutar como **Yo**.
+   - Acceso: **Cualquier persona**.
+2. Guardar la URL `/exec` y el mismo secreto del script en Pages:
 
-> **Bloqueo actual:** la cuenta de Cloudflare no tiene ninguna zona/dominio, así
-> que Email Sending no puede enviar desde `no-reply@noubora.com`. Mientras no se
-> conecte un dominio, las cuentas nuevas quedan con `email_verified = 0` y el
-> servidor rechaza sus escrituras. Para desbloquear una cuenta manualmente:
+   ```powershell
+   npx wrangler pages secret put MAIL_RELAY_URL --project-name nouboracatalog
+   npx wrangler pages secret put MAIL_RELAY_SECRET --project-name nouboracatalog
+   ```
+
+3. `MAIL_FROM` por defecto es `tellezsoftware@gmail.com` y `MAIL_FROM_NAME` es
+   `Noubora Catalog`; se pueden sobrescribir en Pages.
+4. Alternativa con dominio propio: habilitar Email Sending en el dominio,
+   desplegar `nouboracatalog-mailer` (`npm run deploy:mailer`) y mantener el
+   service binding `MAILER`.
+5. En local, `wrangler pages dev` usa `EMAIL` y **simula** el envío: el código
+   aparece en la consola (`send_email binding called with...`) y el correo se
+   guarda en `.wrangler/tmp/email/...`.
+
+> **Mientras el relay de Gmail no esté configurado**, las cuentas nuevas quedan
+> con `email_verified = 0` y el servidor rechaza sus escrituras. Para desbloquear
+> una cuenta manualmente:
 >
 > ```powershell
 > npx wrangler d1 execute nouboracatalog --remote --command "UPDATE users SET email_verified = 1 WHERE email = 'correo@ejemplo.com'"
@@ -374,6 +384,11 @@ Configuración de envío:
 - Descuento anual: 25 % en Básico, 31 % en Negocio, 33 % en Pro; Empresa sin
   descuento.
 - El detalle completo y su justificación están en [PRICING.md](./PRICING.md).
+- La prueba al registrarse dura **7 días** y permite hasta **10 productos**;
+  después se requiere un plan de pago. Está aplicado en `products.ts`.
+- **Inconsistencia pendiente:** el plan Emprende gratuito de la tabla y de la
+  landing (100 productos) todavía no está implementado. Hoy la única vía
+  gratuita es la prueba de 7 días con 10 productos.
 
 ### Delivery y comisiones
 

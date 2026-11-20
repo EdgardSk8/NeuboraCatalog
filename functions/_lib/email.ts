@@ -1,6 +1,6 @@
 import { CODE_TTL_MINUTES } from './verification'
 
-const DEFAULT_FROM_ADDRESS = 'no-reply@noubora.com'
+const DEFAULT_FROM_ADDRESS = 'tellezsoftware@gmail.com'
 const DEFAULT_FROM_NAME = 'Noubora Catalog'
 
 type VerificationEmail = {
@@ -76,6 +76,41 @@ type MailerPayload = {
   text: string
 }
 
+async function sendWithRelay(env: Env, payload: MailerPayload): Promise<boolean> {
+  const url = env.MAIL_RELAY_URL?.trim()
+  const secret = env.MAIL_RELAY_SECRET?.trim()
+  if (!url || !secret) return false
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        secret,
+        to: payload.to,
+        from: payload.from.email,
+        fromName: payload.from.name,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+      }),
+    })
+    if (!response.ok) {
+      console.error('El relay de Gmail rechazó el envío.', response.status)
+      return false
+    }
+    const result = await response.json().catch(() => null) as { ok?: boolean } | null
+    if (!result?.ok) {
+      console.error('El relay de Gmail no confirmó el envío.')
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error('No se pudo contactar al relay de Gmail.', error instanceof Error ? error.name : 'unknown')
+    return false
+  }
+}
+
 async function sendWithMailerWorker(env: Env, payload: MailerPayload): Promise<boolean> {
   if (!env.MAILER) return false
 
@@ -106,11 +141,14 @@ export async function sendVerificationEmail(env: Env, to: string, code: string, 
     text: message.text,
   }
 
-  // Pages no admite `send_email`: en producción el envío pasa por el Worker.
+  // Gmail (Apps Script) es el canal principal cuando está configurado.
+  if (env.MAIL_RELAY_URL && env.MAIL_RELAY_SECRET) return sendWithRelay(env, payload)
+
+  // Alternativa con dominio propio: Worker + Cloudflare Email Sending.
   if (env.MAILER) return sendWithMailerWorker(env, payload)
 
   if (!env.EMAIL) {
-    console.warn('La verificación de correo requiere el binding MAILER (producción) o EMAIL (local).')
+    console.warn('La verificación de correo requiere MAIL_RELAY_URL/SECRET, MAILER o EMAIL.')
     return false
   }
 

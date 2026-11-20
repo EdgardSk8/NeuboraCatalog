@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-title TellezSoftware - Servidor
+title Noubora Catalog - Servidor
 cd /d "%~dp0"
 
 set "PORT=8788"
 
 echo ============================================================
-echo   TellezSoftware - Iniciar servidor
+echo   Noubora Catalog - Iniciar servidor
 echo ============================================================
 echo.
 echo   Aplicacion completa con D1 y R2 simulados en local.

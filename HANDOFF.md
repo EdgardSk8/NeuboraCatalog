@@ -110,12 +110,17 @@
 
 | Recurso | Nombre | Identificador |
 | --- | --- | --- |
-| Proyecto Pages | `tellezsoftware` | — |
-| Dominio de producción | `tellezsoftware.pages.dev` | — |
-| D1 producción | `tellezsoftware` | `b5146cf5-5045-4bfb-b9e2-3a0e73213947` |
-| D1 preview | `tellezsoftware-preview` | `dad5eac4-f082-48e6-9830-4471a50db273` |
-| R2 producción | `tellezsoftware-files-production` | — |
-| R2 preview | `tellezsoftware-files-preview` | — |
+| Proyecto Pages | `nouboracatalog` | — |
+| Dominio de producción | `nouboracatalog.pages.dev` | — |
+| Repositorio | `EdgardSk8/NeuboraCatalog` (rama `main`) | — |
+| D1 producción | `nouboracatalog` | `c850de7e-b330-41df-90c1-f2336bb0e40f` |
+| D1 preview | `nouboracatalog-preview` | `ff212bee-ce8e-4490-a396-623b4c3a97a6` |
+| R2 producción | `nouboracatalog-files-production` | — |
+| R2 preview | `nouboracatalog-files-preview` | — |
+
+> Los recursos `tellezsoftware*` siguen existiendo como instalación anterior. La
+> aplicación nueva no comparte base de datos ni imágenes con ellos: empieza con
+> D1 y R2 vacíos.
 
 **Bindings en `wrangler.jsonc`:** `DB` (D1) y `FILES` (R2), con un bloque `env.preview`
 que apunta a los recursos de preview.
@@ -125,14 +130,19 @@ que apunta a los recursos de preview.
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
+> **Pendiente en `nouboracatalog`:** estos dos secretos todavía no están
+> configurados en el proyecto nuevo. El registro e inicio de sesión con correo
+> funcionan; el botón de Google falla hasta añadirlos con `wrangler pages secret
+> put` y registrar el nuevo redirect URI en Google Cloud.
+
 ### Enlaces al panel de Cloudflare
 
 - Panel general: <https://dash.cloudflare.com>
 - Workers & Pages: <https://dash.cloudflare.com/?to=/:account/workers-and-pages>
-- Proyecto Pages: <https://dash.cloudflare.com/?to=/:account/pages/view/tellezsoftware>
+- Proyecto Pages: <https://dash.cloudflare.com/?to=/:account/pages/view/nouboracatalog>
 - Bases D1: <https://dash.cloudflare.com/?to=/:account/d1>
-- D1 producción: <https://dash.cloudflare.com/?to=/:account/d1/databases/b5146cf5-5045-4bfb-b9e2-3a0e73213947>
-- D1 preview: <https://dash.cloudflare.com/?to=/:account/d1/databases/dad5eac4-f082-48e6-9830-4471a50db273>
+- D1 producción: <https://dash.cloudflare.com/?to=/:account/d1/databases/c850de7e-b330-41df-90c1-f2336bb0e40f>
+- D1 preview: <https://dash.cloudflare.com/?to=/:account/d1/databases/ff212bee-ce8e-4490-a396-623b4c3a97a6>
 - Buckets R2: <https://dash.cloudflare.com/?to=/:account/r2>
 
 > Los enlaces con `:account` resuelven a la cuenta con la que hayas iniciado
@@ -152,7 +162,7 @@ npm run dev:stack:lan  # además expuesta a la red local
 ```
 
 `dev:stack` aplica las migraciones locales (`wrangler d1 migrations apply
-tellezsoftware --local`) y luego compila y sirve. Los datos locales viven en
+nouboracatalog --local`) y luego compila y sirve. Los datos locales viven en
 `.wrangler/` y **no** se sincronizan con Cloudflare.
 
 También existe `iniciar-servidor.bat`: menú con opción 1 (solo local) y 2 (local
@@ -173,28 +183,28 @@ npm test        # node:test, 8 pruebas
 ```powershell
 # Primera vez
 npx wrangler login
-npx wrangler pages project create tellezsoftware --production-branch main
+npx wrangler pages project create nouboracatalog --production-branch main
 
 # Desplegar (la rama main va a producción)
 npm run build
-npx wrangler pages deploy dist --project-name tellezsoftware --branch main
+npx wrangler pages deploy dist --project-name nouboracatalog --branch main
 
 # Rama de preview
-npx wrangler pages deploy dist --project-name tellezsoftware --branch preview
+npx wrangler pages deploy dist --project-name nouboracatalog --branch preview
 ```
 
 ### Migraciones en remoto
 
 ```powershell
-npx wrangler d1 migrations apply tellezsoftware --remote
-npx wrangler d1 migrations apply tellezsoftware --remote --env preview
+npx wrangler d1 migrations apply nouboracatalog --remote
+npx wrangler d1 migrations apply nouboracatalog --remote --env preview
 ```
 
 ### Secretos en producción
 
 ```powershell
-npx wrangler pages secret put GOOGLE_CLIENT_ID --project-name tellezsoftware
-npx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name tellezsoftware
+npx wrangler pages secret put GOOGLE_CLIENT_ID --project-name nouboracatalog
+npx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name nouboracatalog
 ```
 
 También se puede conectar el repositorio de GitHub desde el panel de Pages con:
@@ -209,12 +219,12 @@ comando de compilación `npm run build`, directorio de salida `dist`.
 - Consola de credenciales:
   <https://console.cloud.google.com/apis/credentials?project=gentle-shell-463320-v5>
 
-**Redirect URIs registradas:**
+**Redirect URIs necesarias:**
 
-- `https://tellezsoftware.pages.dev/api/auth/google/callback`
-- `http://localhost:8788/api/auth/google/callback`
+- `https://nouboracatalog.pages.dev/api/auth/google/callback` — **pendiente de añadir** en Google Cloud.
+- `http://localhost:8788/api/auth/google/callback` — ya registrada.
 
-**Orígenes JS autorizados:** `https://tellezsoftware.pages.dev`
+**Orígenes JS autorizados:** `https://nouboracatalog.pages.dev` — **pendiente de añadir**.
 
 **Cómo funciona:** `GET /api/auth/google/start` genera `state` de un solo uso y
 PKCE (S256) en una cookie HttpOnly de 10 minutos; el callback valida `state`,
@@ -381,7 +391,7 @@ Configuración de envío:
 El dominio **no requiere un proyecto nuevo**. Pasos:
 
 1. Comprar el dominio (Cloudflare Registrar lo vende a precio de costo).
-2. En Pages → proyecto `tellezsoftware` → *Custom domains* → añadir
+2. En Pages → proyecto `nouboracatalog` → *Custom domains* → añadir
    `noubora.com` y `www.noubora.com`. Cloudflare crea el DNS y el certificado.
 3. Google Cloud → Credentials → cliente OAuth → añadir:
    - Redirect URI: `https://noubora.com/api/auth/google/callback`
@@ -389,7 +399,7 @@ El dominio **no requiere un proyecto nuevo**. Pasos:
    Dejar las anteriores activas al menos una semana.
 4. Actualizar en `index.html`: `og:url`, `og:image`, `twitter:image`.
 5. Actualizar los enlaces del sitio corporativo (`site/index.html` y
-   `site/en/index.html`) que hoy apuntan a `https://tellezsoftware.pages.dev`.
+   `site/en/index.html`) que hoy apuntan a `https://nouboracatalog.pages.dev`.
 6. Avisar a los vendedores: los enlaces de catálogo cambian de dominio. Opcional:
    dejar el proyecto viejo sirviendo un 301.
 7. Recordar: **las sesiones abiertas se cierran una vez** porque la cookie cambia

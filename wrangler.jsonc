@@ -1,20 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tellezsoftware",
+  "name": "nouboracatalog",
   "compatibility_date": "2026-11-12",
   "pages_build_output_dir": "./dist",
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "tellezsoftware",
-      "database_id": "b5146cf5-5045-4bfb-b9e2-3a0e73213947",
+      "database_name": "nouboracatalog",
+      "database_id": "c850de7e-b330-41df-90c1-f2336bb0e40f",
       "migrations_dir": "migrations"
     }
   ],
   "r2_buckets": [
     {
       "binding": "FILES",
-      "bucket_name": "tellezsoftware-files-production"
+      "bucket_name": "nouboracatalog-files-production"
     }
   ],
   "send_email": [{ "name": "EMAIL" }],
@@ -23,15 +23,15 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "tellezsoftware-preview",
-          "database_id": "dad5eac4-f082-48e6-9830-4471a50db273",
+          "database_name": "nouboracatalog-preview",
+          "database_id": "ff212bee-ce8e-4490-a396-623b4c3a97a6",
           "migrations_dir": "migrations"
         }
       ],
       "r2_buckets": [
         {
           "binding": "FILES",
-          "bucket_name": "tellezsoftware-files-preview"
+          "bucket_name": "nouboracatalog-files-preview"
         }
       ]
     }

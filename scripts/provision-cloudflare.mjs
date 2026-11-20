@@ -6,7 +6,7 @@ import { stdin, stdout } from 'node:process'
 
 const root = process.cwd()
 const configPath = resolve(root, 'wrangler.jsonc')
-const projectName = process.env.CLOUDFLARE_PAGES_PROJECT ?? 'tellezsoftware'
+const projectName = process.env.CLOUDFLARE_PAGES_PROJECT ?? 'nouboracatalog'
 const names = {
   productionDatabase: projectName,
   previewDatabase: `${projectName}-preview`,
@@ -214,6 +214,7 @@ function buildConfig(ids) {
     r2_buckets: [
       { binding: 'FILES', bucket_name: names.productionBucket },
     ],
+    send_email: [{ name: 'EMAIL' }],
     env: {
       preview: {
         d1_databases: [

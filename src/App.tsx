@@ -1823,10 +1823,8 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     </div>
     <div className="mx-auto my-6 grid w-full max-w-[1050px] flex-1 grid-cols-1 items-center gap-4 min-[851px]:grid-cols-[minmax(0,.9fr)_minmax(380px,1fr)] min-[851px]:gap-6">
       <section className="max-w-[400px] p-2.5 max-[850px]:hidden">
-        <div className="mb-6 rounded-[24px] bg-[linear-gradient(135deg,#1db973_0%,#b91db1_52%,#b9251d_100%)] p-[1.5px] shadow-[0_14px_30px_-22px_#106a4080]">
-          <div className="grid size-24 place-items-center rounded-[22.5px] bg-[linear-gradient(135deg,#e2f6ed_0%,#f8e5f7_55%,#f8e5e4_100%)]">
-            <img src="/logo.png" alt="" className="block size-16 object-contain" />
-          </div>
+        <div className="mb-6 grid size-24 place-items-center rounded-[24px] border border-[#e0eee7] bg-white shadow-[0_14px_30px_-22px_#106a4080]">
+          <img src="/logo.png" alt="" className="block size-16 object-contain" />
         </div>
         <p className="eyebrow flex items-center gap-1.5 tracking-[1.2px] text-[#137748]">
           <span className="size-1.5 rounded-full bg-[#1db973]" aria-hidden="true" />

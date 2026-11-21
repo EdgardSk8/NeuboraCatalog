@@ -37,10 +37,9 @@
 ### Implementado y funcionando
 
 - Registro e inicio de sesión con correo y contraseña.
-- Registro y login sin verificación obligatoria: las cuentas nuevas quedan
-  verificadas al crearse y pasan directamente a configurar el negocio. La
-  infraestructura de códigos se conserva para el flujo heredado, pero la
-  migración `0010` marcó todas las cuentas existentes como verificadas.
+- Registro con verificación por correo obligatoria: la cuenta se crea con
+  `email_verified = 0`, se envía un código de 6 dígitos y el panel queda
+  bloqueado hasta confirmarlo. Google entra ya verificado.
 - Inicio de sesión con Google (OAuth 2.0 con `state` de un solo uso y PKCE S256),
   configurado en el proyecto `tellezsoftware-auth` y publicado en producción.
 - Sesiones en cookie `__Host-tellez-session` (HttpOnly, `Secure`, SameSite).
@@ -377,17 +376,21 @@ seguridad, pero las cuentas nuevas y las existentes ya quedan verificadas.
 
 ### Verificación de correo (flujo heredado)
 
-- El alta actual con correo y contraseña **no exige verificación**: la cuenta se
-  crea con `email_verified = 1`, no se envía ningún código y pasa directamente a
-  la configuración del negocio.
-- Las cuentas creadas con Google también entran verificadas.
-- Migración `0010_disable_email_verification.sql`: marca como verificadas las
-  cuentas existentes que aún no habían confirmado y elimina los códigos
-  pendientes.
-- La pantalla independiente, los endpoints `/api/auth/verification/*`, el correo
-  de confirmación y el relay de Gmail se conservan para el flujo heredado, pero
-  el registro ya no los usa.
-- Para referencia del flujo heredado: el correo usa el remitente
+- El alta con correo y contraseña **exige verificación**: la cuenta se crea con
+  `email_verified = 0`, se envía un código de 6 dígitos y el panel queda
+  bloqueado hasta confirmarlo. Al validar el código correcto se desbloquea todo
+  (configuración del negocio y panel).
+- Las cuentas creadas con Google entran ya verificadas.
+- Migración `0010_disable_email_verification.sql`: marcó como verificadas las
+  cuentas que existían en ese momento y eliminó los códigos pendientes. Las
+  cuentas nuevas vuelven a nacer pendientes.
+- La pantalla de verificación, los endpoints `/api/auth/verification/*`, el
+  correo de confirmación y el relay de Gmail están activos y en uso.
+- En desarrollo local, sin canal de correo, definí
+  `DEV_SHOW_VERIFICATION_CODE=true` en `.dev.vars`: el código vuelve en la
+  respuesta del API y se muestra en la pantalla de confirmación. Nunca debe
+  definirse en producción.
+- Para referencia del flujo: el correo usa el remitente
   **TellezSoftware** y un diseño minimalista inspirado en GitHub; el código y el
   botón **Copiar código** abren `/copiar-codigo#<código>`.
 

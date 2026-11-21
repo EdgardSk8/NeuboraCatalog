@@ -14,3 +14,8 @@ MAIL_FROM_NAME=TellezSoftware
 # Despliega scripts/gmail-relay.gs y pega aquí la URL /exec y el secreto.
 # MAIL_RELAY_URL=https://script.google.com/macros/s/.../exec
 # MAIL_RELAY_SECRET=...
+
+# Solo desarrollo local. Si no hay canal de correo configurado, el código de
+# verificación vuelve en la respuesta del API y se muestra en la pantalla de
+# confirmación. Nunca lo definas en Cloudflare Pages.
+DEV_SHOW_VERIFICATION_CODE=true

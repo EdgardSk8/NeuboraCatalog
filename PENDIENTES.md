@@ -1,10 +1,9 @@
 # Pendientes — Noubora Catalog
 
-> Última actualización: 20 de noviembre de 2026, 19:35 (America/Managua).
-> Estado: los cambios de Google OAuth y de registro sin verificación están
-> desplegados y confirmados en git. En esta sesión se trabajó el formulario de
-> producto por giro, las imágenes con vista previa y la sesión en local. Para el
-> estado técnico completo, consulta [HANDOFF.md](./HANDOFF.md).
+> Última actualización: 20 de noviembre de 2026, 21:10 (America/Managua).
+> Estado: Google OAuth y el rediseño del panel están desplegados. El registro con
+> correo y contraseña vuelve a exigir confirmación por código. Para el estado
+> técnico completo, consulta [HANDOFF.md](./HANDOFF.md).
 
 ---
 
@@ -41,6 +40,13 @@
   “Datos del producto” e “Inventario y precios”) y pie fijo con las acciones.
   Los botones pasan a 36 px, radio 10 px, padding 0 16 px, fuente 13 px y
   micro-elevación al pasar el cursor.
+- **Verificación por correo reactivada.** El registro crea la cuenta con
+  `email_verified = 0`, emite un código de 6 dígitos y lo envía. Hasta
+  confirmarlo el panel queda bloqueado: la pantalla de confirmación sustituye a
+  toda la aplicación y el API rechaza cualquier escritura con
+  `403 email_not_verified`. Al validar el código correcto se desbloquea todo.
+  En local, `DEV_SHOW_VERIFICATION_CODE=true` devuelve el código en la respuesta
+  y la pantalla lo muestra para poder probar sin correo.
 - **Pruebas:** `npm test` pasa **13/13**; las nuevas son
   `tests/product-form-profile.test.ts`.
 
@@ -54,13 +60,11 @@
 - **Cuentas existentes con correo y contraseña:** si el correo coincide con una
   cuenta de Google verificada, la identidad de Google se vincula a esa cuenta y
   se permite entrar con cualquiera de los dos métodos.
-- **Registro sin verificación:** al crear una cuenta con correo y contraseña se
-  guarda con `email_verified = 1`, no se envía correo y pasa directamente a la
-  configuración del negocio.
+- **Registro con verificación:** la cuenta se crea con `email_verified = 0`, se
+  envía el código de 6 dígitos y el panel queda bloqueado hasta confirmarlo.
 - **Migración `0010_disable_email_verification.sql`:** aplicada en producción y
-  en local. Marcó como verificadas las cuentas existentes y eliminó códigos
-  pendientes. Hoy `SELECT COUNT(*) FROM users WHERE email_verified = 0` devuelve
-  `0`.
+  en local. Marcó como verificadas las cuentas que existían en ese momento y
+  eliminó los códigos pendientes; las cuentas nuevas vuelven a nacer pendientes.
 - **URIs de Google agregadas:** `http://127.0.0.1:8788` como origen JS y
   `http://127.0.0.1:8788/api/auth/google/callback` como redirect URI, además de
   producción y `localhost`.
@@ -108,11 +112,14 @@
 
 ### 2.4 Verificación por correo
 
-- Ya **no se exige** para crear cuentas.
-- La pantalla independiente de verificación, los endpoints
-  `/api/auth/verification/*`, el template de correo y el relay de Gmail siguen
-  existiendo para el flujo heredado, pero el registro actual no los usa.
-- Decidir si se eliminan en una limpieza posterior o se conservan para el futuro.
+- **Sí se exige** para crear cuentas con correo y contraseña: la cuenta nace con
+  `email_verified = 0`, el panel queda bloqueado y solo se desbloquea al
+  confirmar el código de 6 dígitos.
+- En producción el envío sale por el Worker `nouboracatalog-mailer` (service
+  binding `MAILER`) o por el relay de Gmail si están configurados.
+- En local, `DEV_SHOW_VERIFICATION_CODE=true` en `.dev.vars` devuelve el código
+  en la respuesta del API y la pantalla de confirmación lo muestra. Esa variable
+  **no** debe existir en Cloudflare Pages.
 
 ### 2.5 Antiabuso
 

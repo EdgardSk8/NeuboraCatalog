@@ -1,5 +1,7 @@
 import { hashPassword } from '../../_lib/auth'
+import { sendVerificationEmail } from '../../_lib/email'
 import { json, isHttpsRequest, isSameOrigin, randomToken, readJsonObject, sessionCookie, sha256 } from '../../_lib/http'
+import { issueVerificationCode } from '../../_lib/verification'
 import { CURRENT_TERMS_VERSION } from '../../../shared/terms'
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -47,7 +49,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           id, email, email_verified, password_hash, password_salt, password_iterations,
           terms_accepted_version, terms_accepted_at, created_at
         )
-        VALUES (?1, ?2, 1, ?3, ?4, ?5, ?6, ?7, ?7)
+        VALUES (?1, ?2, 0, ?3, ?4, ?5, ?6, ?7, ?7)
       `).bind(
         userId, email, passwordRecord.hash, passwordRecord.salt,
         passwordRecord.iterations, CURRENT_TERMS_VERSION, now,
@@ -66,10 +68,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'No se pudo completar el registro. Inténtalo de nuevo.' }, 500)
   }
 
-  // La cuenta queda activa al crearse: no se exige confirmación por correo.
+  // La cuenta queda pendiente hasta confirmar el correo con el código enviado.
+  const issued = await issueVerificationCode(env.DB, userId, Date.now())
+  const delivered = issued.ok
+    ? await sendVerificationEmail(env, email, issued.code, body.language === 'en' ? 'en' : 'es', new URL(request.url).origin)
+    : false
+  // Solo en desarrollo: sin canal de correo el código vuelve en la respuesta.
+  const devCode = issued.ok && !delivered && env.DEV_SHOW_VERIFICATION_CODE === 'true' ? issued.code : null
+
   return json({
-    user: { id: userId, email, emailVerified: true },
+    user: { id: userId, email, emailVerified: false },
     tenant: { id: tenantId, name: 'Cuenta nueva', slug, profile: 'solid_goods', businessType: 'general', currency: 'NIO', setupCompleted: false },
-    verification: { required: false },
+    verification: { required: true, delivered, devCode },
   }, 201, { 'Set-Cookie': sessionCookie(sessionToken, SESSION_TTL_SECONDS, isHttpsRequest(request)) })
 }

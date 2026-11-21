@@ -135,7 +135,8 @@ const copy = {
     verifyLockedBody: 'Solo podrás entrar al panel después de confirmar tu correo.',
     verifyRequiredToUse: 'Confirma tu correo para usar el servicio.',
     verifyResendHint: 'Revisa la carpeta de spam si no lo encuentras.',
-    verifyLocalHint: 'En local el correo no sale: el código se imprime en la consola de wrangler.',
+    verifyLocalHint: 'En local el correo no se envía: el código de prueba aparece en esta pantalla.',
+    verifyDevCode: 'Código de prueba (solo local):',
     verifyPageStep: 'Paso previo a la configuración de tu negocio.',
     verifyBack: 'Usar otra cuenta',
     authUnavailable: 'No se pudo conectar al API de Pages. Ejecuta npm run dev:stack para usar autenticación local.',
@@ -229,7 +230,8 @@ const copy = {
     verifyLockedBody: 'You can enter the dashboard only after confirming your email.',
     verifyRequiredToUse: 'Confirm your email to use the service.',
     verifyResendHint: 'Check your spam folder if you cannot find it.',
-    verifyLocalHint: 'Locally the email is not sent: the code is printed in the wrangler console.',
+    verifyLocalHint: 'Locally the email is not sent: the test code appears on this screen.',
+    verifyDevCode: 'Test code (local only):',
     verifyPageStep: 'This step comes before setting up your business.',
     verifyBack: 'Use another account',
     authUnavailable: 'Could not connect to the Pages API. Run npm run dev:stack to use local authentication.',
@@ -679,6 +681,13 @@ function EmailVerificationPage({ t, language, email, onVerified, onBack, onLangu
       return ''
     }
   })
+  const [devCode, setDevCode] = useState(() => {
+    try {
+      return window.sessionStorage.getItem('noubora-verification-dev-code') ?? ''
+    } catch {
+      return ''
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -726,6 +735,10 @@ function EmailVerificationPage({ t, language, email, onVerified, onBack, onLangu
       const retryAfter = isRecord(result) && typeof result.retryAfter === 'number' ? result.retryAfter : 60
       setCooldown(retryAfter)
       setInfo(t.verifySent)
+      if (isRecord(result) && typeof result.devCode === 'string') {
+        setDevCode(result.devCode)
+        setCode(result.devCode)
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t.verifySendError)
       if (requestError instanceof ApiResponseError && requestError.retryAfter) setCooldown(requestError.retryAfter)
@@ -787,7 +800,8 @@ function EmailVerificationPage({ t, language, email, onVerified, onBack, onLangu
           {error && <p className="verify-screen-message verify-screen-error" id="verify-error" role="alert">{error}</p>}
           {!error && info && <p className="verify-screen-message" role="status">{info}</p>}
           <p className="verify-screen-hint">{t.verifyLockedBody} {t.verifyResendHint}</p>
-          {isLocalHost && <p className="verify-screen-hint verify-screen-dev">{t.verifyLocalHint}</p>}
+          {isLocalHost && devCode && <p className="verify-screen-hint verify-screen-dev">{t.verifyDevCode} <strong>{devCode}</strong></p>}
+          {isLocalHost && !devCode && <p className="verify-screen-hint verify-screen-dev">{t.verifyLocalHint}</p>}
 
           <div className="verify-screen-footer">
             <span>{t.verifyPageStep}</span>
@@ -975,6 +989,12 @@ function WorkspaceApp() {
     setSession((current) => current
       ? { ...current, user: { ...current.user, emailVerified: true } }
       : current)
+    try {
+      window.sessionStorage.removeItem('noubora-verification-dev-code')
+      window.sessionStorage.removeItem('noubora-verification-code')
+    } catch {
+      // Sin sessionStorage no hay nada que limpiar.
+    }
     setToast(t.verifySuccess)
     try {
       const workspace = await refreshWorkspace()
@@ -993,7 +1013,19 @@ function WorkspaceApp() {
   }
 
   async function register(email: string, password: string, acceptedTermsVersion: string) {
-    await requestApi('/api/auth/register', { email, password, acceptedTermsVersion, language })
+    const result = await requestApi('/api/auth/register', { email, password, acceptedTermsVersion, language })
+    const devCode = isRecord(result) && isRecord(result.verification) && typeof result.verification.devCode === 'string'
+      ? result.verification.devCode
+      : ''
+    if (devCode) {
+      // Solo en local: deja el código listo en la pantalla de verificación.
+      try {
+        window.sessionStorage.setItem('noubora-verification-code', devCode)
+        window.sessionStorage.setItem('noubora-verification-dev-code', devCode)
+      } catch {
+        // Sin sessionStorage el usuario escribe el código a mano.
+      }
+    }
     await refreshWorkspace()
     // La cuenta nace sin confirmar: se muestra la pantalla de verificación.
     setPage('dashboard')

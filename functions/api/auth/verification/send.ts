@@ -23,7 +23,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const delivered = await sendVerificationEmail(env, session.email, result.code, language, new URL(request.url).origin)
 
-  if (!delivered) {
+  // Solo en desarrollo: si no hay canal de correo configurado, el código se
+  // devuelve en la respuesta para poder probar el flujo en local.
+  const devCode = !delivered && env.DEV_SHOW_VERIFICATION_CODE === 'true' ? result.code : null
+
+  if (!delivered && !devCode) {
     return json({
       error: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en un minuto.',
       retryAfter: RESEND_COOLDOWN_SECONDS,
@@ -34,5 +38,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     ok: true,
     expiresInMinutes: CODE_TTL_MINUTES,
     retryAfter: RESEND_COOLDOWN_SECONDS,
+    devCode,
   })
 }

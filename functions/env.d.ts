@@ -12,4 +12,7 @@ interface Env {
   MAIL_RELAY_SECRET?: string
   MAIL_FROM?: string
   MAIL_FROM_NAME?: string
+  // Solo para desarrollo local: devuelve el código de verificación en la
+  // respuesta cuando no hay canal de correo. Nunca definir en producción.
+  DEV_SHOW_VERIFICATION_CODE?: string
 }

@@ -30,6 +30,17 @@
 - **Cuenta de prueba local.** `npm run db:seed:dev` crea `dev@noubora.local` /
   `noubora-dev-2026` con cuatro espacios de trabajo y productos de ejemplo; en
   `127.0.0.1` el acceso muestra un botón para entrar con ella.
+- **Código / SKU opcional.** Al crear un producto el campo puede quedar vacío: el
+  backend genera un código legible y único (tres letras de la categoría y cuatro
+  caracteres aleatorios, p. ej. `GRA-FD78`). Al editar, dejar el campo vacío
+  conserva el código actual.
+- **Alerta de stock bajo en enteros.** El campo usa `step="1"`, redondea al salir
+  y el backend guarda `Math.round(minStock)`, así que nunca queda `3.06`.
+- **Modal y botones alineados al sistema de diseño.** El modal tiene barra de
+  acento con la paleta, cabecera fija, cuerpo con scroll propio (secciones
+  “Datos del producto” e “Inventario y precios”) y pie fijo con las acciones.
+  Los botones pasan a 36 px, radio 10 px, padding 0 16 px, fuente 13 px y
+  micro-elevación al pasar el cursor.
 - **Pruebas:** `npm test` pasa **13/13**; las nuevas son
   `tests/product-form-profile.test.ts`.
 

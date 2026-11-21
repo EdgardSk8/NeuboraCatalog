@@ -58,7 +58,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   }
 
   const name = typeof body.name === 'string' ? body.name.trim() : current.name
-  const sku = typeof body.sku === 'string' ? body.sku.trim() : current.sku
+  // Si el campo queda vacío se conserva el código actual del producto.
+  const sku = typeof body.sku === 'string' && body.sku.trim() ? body.sku.trim() : current.sku
   const category = typeof body.category === 'string' ? body.category.trim() : current.category
   const profile = current.inventory_profile
   const unit = typeof body.unit === 'string' ? body.unit.trim() : current.unit
@@ -77,6 +78,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   if (!isNonNegativeNumber(minStock) || !isNonNegativeNumber(cost) || !isNonNegativeNumber(price)) {
     return json({ error: 'Stock mínimo, costo y precio deben ser números no negativos.' }, 400)
   }
+  // La alerta de stock bajo trabaja siempre con números enteros.
+  const minStockValue = Math.round(minStock)
 
   const updatedAt = new Date().toISOString()
   try {
@@ -88,7 +91,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
       WHERE id = ?12 AND tenant_id = ?13 AND updated_at = ?14
         AND archived_at IS NULL
     `).bind(
-      name, sku, category || 'General', profile, minStock, unit, cost, price,
+      name, sku, category || 'General', profile, minStockValue, unit, cost, price,
       variant || null, serial || null, updatedAt, current.id, session.tenantId, current.updated_at,
     ).run()
     if (result.meta.changes !== 1) return json({ error: 'El producto cambió o está archivado. Actualiza e inténtalo otra vez.' }, 409)
@@ -105,7 +108,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
     category: category || 'General',
     profile,
     quantity: current.quantity,
-    minStock,
+    minStock: minStockValue,
     unit,
     cost,
     price,

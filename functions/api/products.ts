@@ -28,6 +28,28 @@ function isNonNegativeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
 }
 
+function skuPrefix(value: string): string {
+  const normalized = value.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^A-Za-z0-9]/gu, '').toUpperCase()
+  return normalized.slice(0, 3).padEnd(3, 'X')
+}
+
+/**
+ * Código legible para el producto cuando el usuario deja el campo vacío:
+ * tres letras de la categoría (o del nombre) y cuatro caracteres aleatorios.
+ */
+async function generateSku(db: D1Database, tenantId: string, category: string, name: string): Promise<string> {
+  const prefix = skuPrefix(category.length >= 3 ? category : name)
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const suffix = crypto.randomUUID().replace(/-/gu, '').slice(0, 4).toUpperCase()
+    const candidate = `${prefix}-${suffix}`
+    const existing = await db.prepare('SELECT id FROM products WHERE tenant_id = ?1 AND sku = ?2 LIMIT 1')
+      .bind(tenantId, candidate)
+      .first<{ id: string }>()
+    if (!existing) return candidate
+  }
+  return `PRD-${crypto.randomUUID().replace(/-/gu, '').slice(0, 8).toUpperCase()}`
+}
+
 function decodeCursor(value: string | null): Cursor | null | false {
   if (!value) return null
   if (value.length > 256 || !/^[A-Za-z0-9_-]+$/u.test(value)) return false
@@ -173,7 +195,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const price = body.price === undefined ? 0 : body.price
 
   if (name.length < 1 || name.length > 160) return json({ error: 'El nombre debe tener entre 1 y 160 caracteres.' }, 400)
-  if (sku.length < 1 || sku.length > 80) return json({ error: 'El SKU debe tener entre 1 y 80 caracteres.' }, 400)
+  if (sku.length > 80) return json({ error: 'El SKU no puede superar 80 caracteres.' }, 400)
   if (category.length > 80 || unit.length < 1 || unit.length > 30) return json({ error: 'Categoría o unidad no válida.' }, 400)
   if (variant && variant.length > 160 || serial && serial.length > 160) return json({ error: 'Variante o dato de serie demasiado largo.' }, 400)
   if (!isNonNegativeNumber(quantity) || !isNonNegativeNumber(minStock) || !isNonNegativeNumber(cost) || !isNonNegativeNumber(price)) {
@@ -183,6 +205,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const productId = crypto.randomUUID()
   const movementId = crypto.randomUUID()
   const now = new Date().toISOString()
+  // El SKU es opcional: si llega vacío se genera uno legible y único.
+  const finalSku = sku || await generateSku(env.DB, session.tenantId, category, name)
+  // La alerta de stock bajo trabaja siempre con números enteros.
+  const minStockValue = Math.round(minStock)
 
   try {
     const statements = [
@@ -195,8 +221,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           ?16 > ?14 AND (SELECT COUNT(*) FROM products WHERE tenant_id = ?2) < 10
         )
       `).bind(
-        productId, session.tenantId, name, sku, category || 'General', profile,
-        quantity, minStock, unit, cost, price, variant || null, serial || null, now,
+        productId, session.tenantId, name, finalSku, category || 'General', profile,
+        quantity, minStockValue, unit, cost, price, variant || null, serial || null, now,
         plan.planTier, plan.trialStartedAt ? new Date(Date.parse(plan.trialStartedAt) + 7 * 24 * 60 * 60 * 1000).toISOString() : '',
       ),
     ]
@@ -223,5 +249,5 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'No se pudo guardar el producto.' }, 500)
   }
 
-  return json({ id: productId, movementId: quantity > 0 ? movementId : null, name, sku, profile, quantity, createdAt: now }, 201)
+  return json({ id: productId, movementId: quantity > 0 ? movementId : null, name, sku: finalSku, profile, quantity, minStock: minStockValue, createdAt: now }, 201)
 }

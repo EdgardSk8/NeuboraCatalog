@@ -171,6 +171,10 @@ const copy = {
     comingSoon: 'En preparación', comingSoonHint: 'Esta sección forma parte de las siguientes etapas del proyecto.',
     margin: 'Margen estimado', welcomeBack: '¡Qué bueno verte de nuevo!',
     manageImages: 'Gestionar imágenes', addImages: 'Agregar imágenes',
+    skuOptional: 'Si lo dejas vacío generamos un código automático.',
+    integerOnly: 'Solo números enteros.',
+    productSectionData: 'Datos del producto',
+    productSectionStock: 'Inventario y precios',
     imageUploadHint: 'Hasta 5 imágenes por producto.',
     optimizingImages: 'Optimizando imágenes…',
     imageLimit: 'Puedes agregar hasta 5 imágenes por producto.',
@@ -261,6 +265,10 @@ const copy = {
     comingSoon: 'Coming soon', comingSoonHint: 'This section is part of the next project milestones.',
     margin: 'Estimated margin', welcomeBack: 'Welcome back!',
     manageImages: 'Manage images', addImages: 'Add images',
+    skuOptional: 'Leave it empty and we generate a code for you.',
+    integerOnly: 'Whole numbers only.',
+    productSectionData: 'Product details',
+    productSectionStock: 'Inventory and pricing',
     imageUploadHint: 'Up to 5 images per product.',
     optimizingImages: 'Optimizing images…',
     imageLimit: 'You can add up to 5 images per product.',
@@ -1120,7 +1128,7 @@ function WorkspaceApp() {
         )
         if (!isRecord(result) || typeof result.id !== 'string') throw new Error('El API no devolvió el identificador del producto.')
         const productId = result.id
-        let savedProduct = isEditing ? mapApiProduct(result) : { ...product, id: productId }
+        let savedProduct = isEditing ? mapApiProduct(result) : { ...product, id: productId, sku: typeof result.sku === 'string' ? result.sku : product.sku }
         if (isEditing) {
           savedProduct = { ...savedProduct, imageUrl: editingProduct?.imageUrl }
           setProducts((current) => current.map((item) => item.id === productId ? savedProduct : item))
@@ -1916,7 +1924,7 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
     sku: initialProduct?.sku ?? '',
     category: initialProduct?.category ?? '',
     quantity: String(initialProduct?.quantity ?? 0),
-    minStock: String(initialProduct?.minStock ?? 3),
+    minStock: String(Math.round(initialProduct?.minStock ?? 3)),
     unit: initialProduct?.unit ?? productFormProfile(
       businessType,
       language,
@@ -1995,15 +2003,16 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
-    if (!form.name.trim() || !form.sku.trim()) { setError(t.required); return }
-    if (existingProducts.some((product) => product.id !== initialProduct?.id && product.sku.toLowerCase() === form.sku.trim().toLowerCase())) {
+    if (!form.name.trim()) { setError(t.required); return }
+    const sku = form.sku.trim()
+    if (sku && existingProducts.some((product) => product.id !== initialProduct?.id && product.sku.toLowerCase() === sku.toLowerCase())) {
       setError(t.duplicateSku)
       return
     }
     const numeric = (value: string) => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0
     setBusy(true)
     try {
-      await onSave({ id: initialProduct?.id ?? crypto.randomUUID(), name: form.name.trim(), sku: form.sku.trim(), category: form.category.trim() || 'General', profile: productProfile, quantity: numeric(form.quantity), minStock: numeric(form.minStock), unit: form.unit, cost: numeric(form.cost), price: numeric(form.price), variant: form.variant.trim() || undefined, serial: form.serial.trim() || undefined }, images.map((image) => image.blob))
+      await onSave({ id: initialProduct?.id ?? crypto.randomUUID(), name: form.name.trim(), sku, category: form.category.trim() || 'General', profile: productProfile, quantity: numeric(form.quantity), minStock: Math.round(numeric(form.minStock)), unit: form.unit, cost: numeric(form.cost), price: numeric(form.price), variant: form.variant.trim() || undefined, serial: form.serial.trim() || undefined }, images.map((image) => image.blob))
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : t.storageError)
     } finally {
@@ -2012,37 +2021,49 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
   }
   return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
     <section className="product-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="modal-heading"><div><span className="modal-icon"><Package size={19} /></span><div><h2 id="modal-title">{initialProduct ? t.editProduct : t.newProductTitle}</h2><p>{t.newProductSub}</p></div></div><button className="icon-button" onClick={onClose} aria-label={t.cancel}><X size={19} /></button></div>
+      <div className="modal-heading"><div><span className="modal-icon"><Package size={19} /></span><div><h2 id="modal-title">{initialProduct ? t.editProduct : t.newProductTitle}</h2><p>{t.newProductSub}</p></div></div><button type="button" className="icon-button modal-close" onClick={onClose} aria-label={t.cancel}><X size={19} /></button></div>
       <form onSubmit={submit}>
-        <div className="form-grid">
-          <label className="field span-two"><span>{profile.name.label} *</span><input autoFocus value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={profile.name.placeholder} /></label>
-          <label className="field"><span>{profile.sku.label} *</span><input value={form.sku} onChange={(event) => update('sku', event.target.value)} placeholder={profile.sku.placeholder} /></label>
-          <label className="field"><span>{profile.category.label}</span><input list="product-categories" value={form.category} onChange={(event) => updateCategory(event.target.value)} placeholder={profile.category.placeholder} /><datalist id="product-categories">{profile.category.suggestions.map((category) => <option value={category} key={category} />)}</datalist></label>
-          <label className="field"><span>{profile.unit.label}</span><select value={form.unit} onChange={(event) => update('unit', event.target.value)}>{unitChoices.map((unit) => <option value={unit} key={unit}>{unitText(unit, t)}</option>)}</select></label>
-          <label className="field"><span>{profile.quantity.label}</span><input type="number" min="0" step="0.01" value={form.quantity} placeholder={profile.quantity.placeholder} disabled={stockLocked} onChange={(event) => update('quantity', event.target.value)} />{stockLocked && <small>{t.adjustStockSeparately}</small>}</label>
-          <label className="field"><span>{profile.minStock.label}</span><input type="number" min="0" step="0.01" value={form.minStock} placeholder={profile.minStock.placeholder} onChange={(event) => update('minStock', event.target.value)} /></label>
-          <label className="field"><span>{profile.cost.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.cost} onChange={(event) => update('cost', event.target.value)} placeholder={profile.cost.placeholder} /></label>
-          <label className="field"><span>{profile.price.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', event.target.value)} placeholder={profile.price.placeholder} /></label>
-          <label className="field"><span>{profile.variant.label}</span><input value={form.variant} onChange={(event) => update('variant', event.target.value)} placeholder={profile.variant.placeholder} /></label>
-          {profile.serial && <label className="field"><span>{profile.serial.label}</span><input value={form.serial} onChange={(event) => update('serial', event.target.value)} placeholder={profile.serial.placeholder} /></label>}
+        <div className="product-form-body">
+          <section className="form-section">
+            <p className="form-section-title">{t.productSectionData}</p>
+            <div className="form-grid">
+              <label className="field span-two"><span>{profile.name.label} *</span><input autoFocus value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={profile.name.placeholder} /></label>
+              <label className="field"><span>{profile.sku.label}</span><input value={form.sku} onChange={(event) => update('sku', event.target.value)} placeholder={profile.sku.placeholder} /><small>{t.skuOptional}</small></label>
+              <label className="field"><span>{profile.category.label}</span><input list="product-categories" value={form.category} onChange={(event) => updateCategory(event.target.value)} placeholder={profile.category.placeholder} /><datalist id="product-categories">{profile.category.suggestions.map((category) => <option value={category} key={category} />)}</datalist></label>
+              <label className="field"><span>{profile.variant.label}</span><input value={form.variant} onChange={(event) => update('variant', event.target.value)} placeholder={profile.variant.placeholder} /></label>
+              {profile.serial && <label className="field"><span>{profile.serial.label}</span><input value={form.serial} onChange={(event) => update('serial', event.target.value)} placeholder={profile.serial.placeholder} /></label>}
+            </div>
+          </section>
+          <section className="form-section">
+            <p className="form-section-title">{t.productSectionStock}</p>
+            <div className="form-grid">
+              <label className="field"><span>{profile.quantity.label}</span><input type="number" min="0" step="0.01" value={form.quantity} placeholder={profile.quantity.placeholder} disabled={stockLocked} onChange={(event) => update('quantity', event.target.value)} />{stockLocked && <small>{t.adjustStockSeparately}</small>}</label>
+              <label className="field"><span>{profile.unit.label}</span><select value={form.unit} onChange={(event) => update('unit', event.target.value)}>{unitChoices.map((unit) => <option value={unit} key={unit}>{unitText(unit, t)}</option>)}</select></label>
+              <label className="field"><span>{profile.cost.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.cost} onChange={(event) => update('cost', event.target.value)} placeholder={profile.cost.placeholder} /></label>
+              <label className="field"><span>{profile.price.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', event.target.value)} placeholder={profile.price.placeholder} /></label>
+              <label className="field span-two"><span>{profile.minStock.label}</span><input type="number" min="0" step="1" inputMode="numeric" value={form.minStock} placeholder={profile.minStock.placeholder} onChange={(event) => update('minStock', event.target.value)} onBlur={() => update('minStock', String(Math.round(Number(form.minStock) || 0)))} /><small>{t.integerOnly}</small></label>
+            </div>
+          </section>
+          {uploadEnabled && !initialProduct && <section className="form-section">
+            <div className="field image-picker">
+              <div className="image-picker-head"><span>{t.addImages}</span><small>{images.length}/{MAX_PRODUCT_IMAGES}</small></div>
+              <div className="image-preview-grid">
+                {images.map((image, index) => <figure className="image-preview" key={image.id}>
+                  <img src={image.previewUrl} alt={image.name} />
+                  <span className="image-preview-index">{index + 1}</span>
+                  <button type="button" className="image-preview-remove" onClick={() => removeImage(image.id)} aria-label={`${t.deleteImage}: ${image.name}`} disabled={busy || optimizing}><X size={13} /></button>
+                </figure>)}
+                {images.length < MAX_PRODUCT_IMAGES && <label className={`image-preview-add${optimizing ? ' is-busy' : ''}`}>
+                  <ImagePlus size={18} />
+                  <span>{optimizing ? t.optimizingImages : t.addImages}</span>
+                  <input type="file" accept="image/*" multiple disabled={busy || optimizing} onChange={(event) => { const selected = Array.from(event.target.files ?? []); event.target.value = ''; void addFiles(selected) }} />
+                </label>}
+              </div>
+              <small className="image-picker-hint">{t.imageUploadHint}</small>
+            </div>
+          </section>}
+          {error && <p className="form-error" role="alert">{error}</p>}
         </div>
-        {uploadEnabled && !initialProduct && <div className="field image-picker">
-          <div className="image-picker-head"><span>{t.addImages}</span><small>{images.length}/{MAX_PRODUCT_IMAGES}</small></div>
-          <div className="image-preview-grid">
-            {images.map((image, index) => <figure className="image-preview" key={image.id}>
-              <img src={image.previewUrl} alt={image.name} />
-              <span className="image-preview-index">{index + 1}</span>
-              <button type="button" className="image-preview-remove" onClick={() => removeImage(image.id)} aria-label={`${t.deleteImage}: ${image.name}`} disabled={busy || optimizing}><X size={13} /></button>
-            </figure>)}
-            {images.length < MAX_PRODUCT_IMAGES && <label className={`image-preview-add${optimizing ? ' is-busy' : ''}`}>
-              <ImagePlus size={18} />
-              <span>{optimizing ? t.optimizingImages : t.addImages}</span>
-              <input type="file" accept="image/*" multiple disabled={busy || optimizing} onChange={(event) => { const selected = Array.from(event.target.files ?? []); event.target.value = ''; void addFiles(selected) }} />
-            </label>}
-          </div>
-          <small className="image-picker-hint">{t.imageUploadHint}</small>
-        </div>}
-        {error && <p className="form-error" role="alert">{error}</p>}
         <div className="modal-actions"><button type="button" className="outline-button" onClick={onClose} disabled={busy}>{t.cancel}</button><button type="submit" className="primary-button" disabled={busy || optimizing}>{initialProduct ? <Pencil size={15} /> : <Plus size={17} />}{busy ? t.loading : initialProduct ? t.updateProduct : t.save}</button></div>
       </form>
     </section>

@@ -53,6 +53,14 @@
   física, delivery a domicilio, retiro en tienda o envío a domicilio— y, cuando
   hay punto de entrega o retiro, aparecen país, ciudad y dirección. Al volver a
   «solo catálogo» esos datos se limpian. Migración `0011_fulfillment_mode.sql`.
+- **Interfaz de Configurar cuenta.** La pantalla pasa a una tarjeta con cabecera
+  (icono, título y subtítulo), secciones “Inventario y moneda” y “Entrega”, y un
+  pie fijo con el estado y el botón de guardar. En escritorio los campos van a
+  dos columnas con un ancho máximo de 780 px; en móvil todo se apila y el botón
+  ocupa el ancho completo.
+- **Escala única de campos.** Todos los formularios (acceso, configuración
+  inicial, configuración de cuenta y modal de producto) usan controles de 34 px,
+  radio 10 px, etiquetas de 11,5 px y ayudas de 10 px.
 - **Pruebas:** `npm test` pasa **16/16**; la última es
   `tests/fulfillment.test.ts`.
 

@@ -117,6 +117,7 @@ const copy = {
     businessTypeHelp: 'Esto adapta las categorías y los campos sugeridos al agregar productos. Puedes comenzar y configurarlo aquí cuando estés listo.',
     currencyHelp: 'Esta moneda se usa para mostrar costos y precios. Solo se puede cambiar antes de registrar productos.',
     saveSettings: 'Guardar configuración', settingsSaved: 'Configuración guardada correctamente.',
+    settingsHeadTitle: 'Datos del negocio', settingsHeadSub: 'Estos ajustes cambian el catálogo y cómo se leen los costos y precios.', settingsInventorySection: 'Inventario y moneda',
     ownerOnlySettings: 'Solo el propietario de la cuenta puede cambiar esta configuración.',
     setupTitle: 'Preparemos tu espacio de trabajo', setupIntro: 'Unos datos iniciales nos ayudan a adaptar el inventario. Puedes cambiar estos ajustes más adelante.', setupNameHelp: 'Este nombre identificará tu negocio en la aplicación y en tu catálogo público.',
     location: 'Ubicación del negocio', locationHelp: 'Se usa para mostrar dónde entregas o dónde pueden recoger tus clientes.', country: 'País', chooseCountry: 'Selecciona un país', city: 'Ciudad', chooseCity: 'Selecciona una ciudad', address: 'Dirección física', addressPlaceholder: 'Barrio, calle y señas', continueDashboard: 'Guardar y entrar al panel',
@@ -215,6 +216,7 @@ const copy = {
     businessTypeHelp: 'This adapts suggested categories and fields when adding products. You can start now and set it here when you are ready.',
     currencyHelp: 'This currency is used to display costs and prices. It can only be changed before products are recorded.',
     saveSettings: 'Save settings', settingsSaved: 'Settings saved successfully.',
+    settingsHeadTitle: 'Business details', settingsHeadSub: 'These settings change the catalog and how costs and prices are read.', settingsInventorySection: 'Inventory and currency',
     ownerOnlySettings: 'Only the account owner can change these settings.',
     setupTitle: 'Let’s set up your workspace', setupIntro: 'A few details help us tailor inventory to your business. You can change these settings later.', setupNameHelp: 'This name identifies your business in the app and public catalog.',
     location: 'Business location', locationHelp: 'Shown to customers so they know where you deliver or where they can pick up.', country: 'Country', chooseCountry: 'Choose a country', city: 'City', chooseCity: 'Choose a city', address: 'Physical address', addressPlaceholder: 'Neighborhood, street, and directions', continueDashboard: 'Save and open dashboard',
@@ -1720,70 +1722,86 @@ function AccountSettingsPage({ t, language, tenant, onSave }: {
     <div className="welcome-row">
       <div><p className="eyebrow">{t.account}</p><h1>{t.accountConfigTitle}</h1><p className="page-subtitle">{t.accountConfigSub}</p></div>
     </div>
-    <section className="panel">
-      <form className="form-grid" onSubmit={submit}>
-        <label className="field span-two">
-          <span>{language === 'es' ? 'Tipo de negocio' : 'Business type'}</span>
-          <select disabled={!isOwner || busy} value={businessType} onChange={(event) => {
-            if (isSelectableBusinessType(event.target.value)) {
-              setBusinessType(event.target.value)
-              setSaved(false)
-            }
-          }}>
-            {BUSINESS_TYPES.map((type) => <option value={type} key={type}>{businessTypeText(type, language)}</option>)}
-          </select>
-          <small>{t.businessTypeHelp}</small>
-        </label>
-        <label className="field span-two">
-          <span>{t.currency}</span>
-          <select disabled={!isOwner || busy} value={currency} onChange={(event) => { setCurrency(event.target.value); setSaved(false) }}>
-            {currency !== 'NIO' && currency !== 'USD' && <option value={currency}>{currency}</option>}
-            <option value="NIO">NIO — {language === 'es' ? 'Córdobas' : 'Nicaraguan córdobas'}</option>
-            <option value="USD">USD — {language === 'es' ? 'Dólares estadounidenses' : 'US dollars'}</option>
-          </select>
-          <small>{t.currencyHelp}</small>
-        </label>
-        <label className="field span-two">
-          <span>{t.fulfillment}</span>
-          <select disabled={!isOwner || busy} value={fulfillmentMode} onChange={(event) => {
-            if (isFulfillmentMode(event.target.value)) {
-              setFulfillmentMode(event.target.value)
-              setSaved(false)
-            }
-          }}>
-            {FULFILLMENT_MODES.map((mode) => <option value={mode} key={mode}>{fulfillmentText(mode, t)}</option>)}
-          </select>
-          <small>{t.fulfillmentHelp}</small>
-        </label>
-        {showLocation && <div className="form-grid span-two settings-location">
-          <p className="span-two settings-location-title">{t.fulfillmentLocation}</p>
-          <label className="field">
-            <span>{t.country}</span>
-            <select disabled={!isOwner || busy} value={countryCode} onChange={(event) => {
-              setCountryCode(isCountryCode(event.target.value) ? event.target.value : '')
-              setCity('')
-              setSaved(false)
-            }}>
-              <option value="">{t.chooseCountry}</option>
-              {COUNTRIES.map((item) => <option key={item.code} value={item.code}>{countryText(item, language)}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>{t.city}</span>
-            <select disabled={!isOwner || busy || !selectedCountry} value={city} onChange={(event) => { setCity(event.target.value); setSaved(false) }}>
-              <option value="">{t.chooseCity}</option>
-              {selectedCountry?.cities.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
-          <label className="field span-two">
-            <span>{t.address}</span>
-            <input disabled={!isOwner || busy} maxLength={300} value={address} onChange={(event) => { setAddress(event.target.value); setSaved(false) }} placeholder={t.addressPlaceholder} />
-          </label>
-        </div>}
-        {!isOwner && <p className="form-error span-two" role="status">{t.ownerOnlySettings}</p>}
-        {error && <p className="form-error span-two" role="alert">{error}</p>}
-        {saved && <p className="span-two" role="status">{t.settingsSaved}</p>}
-        {isOwner && <div className="span-two"><button type="submit" className="primary-button" disabled={busy}>{busy ? t.loading : t.saveSettings}</button></div>}
+    <section className="panel settings-panel">
+      <div className="settings-head">
+        <span className="settings-head-icon"><Settings size={18} /></span>
+        <div><h2>{t.settingsHeadTitle}</h2><p>{t.settingsHeadSub}</p></div>
+      </div>
+      <form className="settings-form" onSubmit={submit}>
+        <section className="form-section">
+          <p className="form-section-title">{t.settingsInventorySection}</p>
+          <div className="form-grid">
+            <label className="field">
+              <span>{language === 'es' ? 'Tipo de negocio' : 'Business type'}</span>
+              <select disabled={!isOwner || busy} value={businessType} onChange={(event) => {
+                if (isSelectableBusinessType(event.target.value)) {
+                  setBusinessType(event.target.value)
+                  setSaved(false)
+                }
+              }}>
+                {BUSINESS_TYPES.map((type) => <option value={type} key={type}>{businessTypeText(type, language)}</option>)}
+              </select>
+              <small>{t.businessTypeHelp}</small>
+            </label>
+            <label className="field">
+              <span>{t.currency}</span>
+              <select disabled={!isOwner || busy} value={currency} onChange={(event) => { setCurrency(event.target.value); setSaved(false) }}>
+                {currency !== 'NIO' && currency !== 'USD' && <option value={currency}>{currency}</option>}
+                <option value="NIO">NIO — {language === 'es' ? 'Córdobas' : 'Nicaraguan córdobas'}</option>
+                <option value="USD">USD — {language === 'es' ? 'Dólares estadounidenses' : 'US dollars'}</option>
+              </select>
+              <small>{t.currencyHelp}</small>
+            </label>
+          </div>
+        </section>
+        <section className="form-section">
+          <p className="form-section-title">{t.fulfillment}</p>
+          <div className="form-grid">
+            <label className="field span-two">
+              <span>{t.fulfillment}</span>
+              <select disabled={!isOwner || busy} value={fulfillmentMode} onChange={(event) => {
+                if (isFulfillmentMode(event.target.value)) {
+                  setFulfillmentMode(event.target.value)
+                  setSaved(false)
+                }
+              }}>
+                {FULFILLMENT_MODES.map((mode) => <option value={mode} key={mode}>{fulfillmentText(mode, t)}</option>)}
+              </select>
+              <small>{t.fulfillmentHelp}</small>
+            </label>
+          </div>
+          {showLocation && <div className="settings-location">
+            <p className="settings-location-title">{t.fulfillmentLocation}</p>
+            <label className="field">
+              <span>{t.country}</span>
+              <select disabled={!isOwner || busy} value={countryCode} onChange={(event) => {
+                setCountryCode(isCountryCode(event.target.value) ? event.target.value : '')
+                setCity('')
+                setSaved(false)
+              }}>
+                <option value="">{t.chooseCountry}</option>
+                {COUNTRIES.map((item) => <option key={item.code} value={item.code}>{countryText(item, language)}</option>)}
+              </select>
+            </label>
+            <label className="field">
+              <span>{t.city}</span>
+              <select disabled={!isOwner || busy || !selectedCountry} value={city} onChange={(event) => { setCity(event.target.value); setSaved(false) }}>
+                <option value="">{t.chooseCity}</option>
+                {selectedCountry?.cities.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label className="field span-two">
+              <span>{t.address}</span>
+              <input disabled={!isOwner || busy} maxLength={300} value={address} onChange={(event) => { setAddress(event.target.value); setSaved(false) }} placeholder={t.addressPlaceholder} />
+            </label>
+          </div>}
+        </section>
+        {!isOwner && <p className="form-error" role="status">{t.ownerOnlySettings}</p>}
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <div className="settings-actions">
+          {saved && <span className="settings-actions-note" role="status">{t.settingsSaved}</span>}
+          {isOwner && <button type="submit" className="primary-button" disabled={busy}>{busy ? t.loading : t.saveSettings}</button>}
+        </div>
       </form>
     </section>
   </>

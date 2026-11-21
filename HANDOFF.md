@@ -37,10 +37,12 @@
 ### Implementado y funcionando
 
 - Registro e inicio de sesión con correo y contraseña.
-- Verificación de correo con código de 6 dígitos: hasta confirmarlo, la cuenta
-  solo puede ver el panel y el API rechaza cualquier escritura (403
-  `email_not_verified`).
-- Inicio de sesión con Google (OAuth 2.0 con `state` de un solo uso y PKCE S256).
+- Registro y login sin verificación obligatoria: las cuentas nuevas quedan
+  verificadas al crearse y pasan directamente a configurar el negocio. La
+  infraestructura de códigos se conserva para el flujo heredado, pero la
+  migración `0010` marcó todas las cuentas existentes como verificadas.
+- Inicio de sesión con Google (OAuth 2.0 con `state` de un solo uso y PKCE S256),
+  configurado en el proyecto `tellezsoftware-auth` y publicado en producción.
 - Sesiones en cookie `__Host-tellez-session` (HttpOnly, `Secure`, SameSite).
 - Multiempresa: `tenants`, `tenant_memberships`, roles y aislamiento por tenant
   verificado en cada endpoint.
@@ -93,16 +95,18 @@
 | `scripts/` | `provision-cloudflare.mjs` (infra) y `test-local-api.mjs` |
 | `workers/` | `mailer.js`: Worker interno que expone Email Sending a Pages |
 | `tests/` | Pruebas con `node:test` + `--experimental-strip-types` |
-| `public/` | Logo, iconos, manifiesto PWA y service worker |
+| `public/` | Logo, iconos, manifiesto PWA, service worker, `privacidad.html` y `copiar-codigo.html` |
 
 ### Rutas del frontend
 
 | Ruta | Qué muestra |
 | --- | --- |
-| `/` | Panel si hay sesión; landing del producto si no |
+| `/` | Verificación si la cuenta no confirmó el correo; panel si la sesión está verificada; landing si no hay sesión |
 | `/bienvenida` | Landing aunque haya sesión (útil para revisarla) |
 | `/ingresar` | Inicio de sesión y registro |
 | `/terminos` | Términos y condiciones (`?lang=en` para inglés) |
+| `/privacidad` | Política de privacidad (página estática en `public/privacidad.html`) |
+| `/copiar-codigo` | Copia el código de verificación desde el enlace del correo |
 | `/catalogo/{slug}` | Catálogo público del negocio |
 
 ---
@@ -133,10 +137,10 @@ recursos de preview.
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
-> **Pendiente en `nouboracatalog`:** estos dos secretos todavía no están
-> configurados en el proyecto nuevo. El registro e inicio de sesión con correo
-> funcionan; el botón de Google falla hasta añadirlos con `wrangler pages secret
-> put` y registrar el nuevo redirect URI en Google Cloud.
+> **Estado:** ambos secretos están configurados en el proyecto `nouboracatalog`
+> y el botón de Google funciona en producción. Los secretos se cargan con
+> `wrangler pages secret put`; después hay que volver a desplegar para que el
+> nuevo deployment los reciba. Los valores no se guardan en este repositorio.
 
 **Correo:** el canal principal es el relay de Gmail (`tellezsoftware@gmail.com`)
 en `scripts/gmail-relay.gs`, configurado con los secretos `MAIL_RELAY_URL` y
@@ -231,32 +235,70 @@ comando de compilación `npm run build`, directorio de salida `dist`.
 
 ## 7. Google OAuth (paso a paso)
 
-- Proyecto de Google Cloud: **`My First Project`** (`gentle-shell-463320-v5`).
-- Cliente OAuth de tipo **Web application**.
-- Consola de credenciales:
-  <https://console.cloud.google.com/apis/credentials?project=gentle-shell-463320-v5>
+- Cuenta de Google: **`tellezsoftware@gmail.com`**.
+- Proyecto de Google Cloud: **`TellezSoftware Auth`** (`tellezsoftware-auth`).
+  Se usa para esta app y queda disponible para futuras aplicaciones de
+  TellezSoftware.
+- Cliente OAuth: **`Noubora Catalog Web`**, tipo **Web application**.
+- Client ID (público):
+  `887091178384-ad49lbic533ms075orpd5mi5ddc7and3.apps.googleusercontent.com`
+- Client Secret: solo en Cloudflare (`GOOGLE_CLIENT_SECRET`) y en Google Cloud.
+  **Nunca** se guarda en el repositorio.
+- Consola de Auth Platform:
+  <https://console.cloud.google.com/auth/overview?project=tellezsoftware-auth>
+- Clientes:
+  <https://console.cloud.google.com/auth/clients?project=tellezsoftware-auth>
 
-**Redirect URIs necesarias:**
+**Redirect URIs registradas:**
 
-- `https://nouboracatalog.pages.dev/api/auth/google/callback` — **pendiente de añadir** en Google Cloud.
-- `http://localhost:8788/api/auth/google/callback` — ya registrada.
+- `https://nouboracatalog.pages.dev/api/auth/google/callback`
+- `http://localhost:8788/api/auth/google/callback`
+- `http://127.0.0.1:8788/api/auth/google/callback`
 
-**Orígenes JS autorizados:** `https://nouboracatalog.pages.dev` — **pendiente de añadir**.
+**Orígenes JS autorizados:**
 
-**Cómo funciona:** `GET /api/auth/google/start` genera `state` de un solo uso y
+- `https://nouboracatalog.pages.dev`
+- `http://localhost:8788`
+- `http://127.0.0.1:8788`
+
+**Desarrollo local:** `.dev.vars` (ignorado por git) contiene
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MAIL_FROM` y `MAIL_FROM_NAME` para
+que el botón funcione con `wrangler pages dev`.
+
+**Información de la marca registrada:**
+
+- Página principal: `https://nouboracatalog.pages.dev`
+- Política de privacidad: `https://nouboracatalog.pages.dev/privacidad`
+- Condiciones del servicio: `https://nouboracatalog.pages.dev/terminos`
+- Dominio autorizado: `nouboracatalog.pages.dev`
+- Sin logotipo en la pantalla de consentimiento para no activar la verificación
+  externa mientras la app usa solo scopes básicos.
+
+**Cómo funciona:** el frontend llama `POST /api/auth/google/start` (solo POST;
+un GET devuelve el HTML de la SPA). El endpoint genera `state` de un solo uso y
 PKCE (S256) en una cookie HttpOnly de 10 minutos; el callback valida `state`,
 canjea el código, exige `email_verified` y guarda el `sub` de Google en
 `oauth_accounts`. **El correo nunca se usa como identificador.** Si el correo ya
-existe con contraseña, no se fusionan cuentas: se pide iniciar sesión con el
-método original.
+existe con contraseña, se vincula la identidad de Google a esa misma cuenta
+(Google ya confirmó la dirección) y se crea la sesión; así el usuario puede
+entrar con Google o con su contraseña.
 
-**Modo de la app:** sigue en *Testing* (máximo 100 usuarios de prueba). Para
-abrirla al público hay que publicarla en *Google Auth Platform → Público* y antes
-cargar la política de privacidad en *Información de la marca*.
+**Modo de la app:** **En producción** (público, sin lista de usuarios de prueba).
+Los scopes son `openid`, `email` y `profile`; no son sensibles. Si en el futuro
+se sube un logotipo, se superan 10 dominios o se piden scopes sensibles, Google
+puede exigir verificación.
+
+**Verificación realizada:** `POST /api/auth/google/start` responde `200` con una
+URL de `accounts.google.com` en producción y en `127.0.0.1:8788`. El flujo
+completo se probó con una cuenta nueva y con una cuenta existente de correo y
+contraseña; en ambos casos crea la sesión y entra a la configuración del negocio.
+La cuenta de Google queda vinculada a la cuenta existente.
 
 **Para añadir un dominio nuevo** (por ejemplo `noubora.com`): añadir la redirect
-URI nueva y el origen JS, guardar, y dejar la anterior un par de semanas hasta
-confirmar que nadie la usa.
+URI y el origen JS nuevos, agregar el dominio en *Información de la marca*,
+guardar y dejar los anteriores activos al menos una semana hasta confirmar que
+nadie los usa. Si se agrega un logotipo o más de 10 dominios, revisar si Google
+exige verificación.
 
 ---
 
@@ -273,6 +315,7 @@ confirmar que nadie la usa.
 | `0007_phone_trial_plan.sql` | Teléfono y plan de prueba |
 | `0008_google_oauth.sql` | `oauth_accounts` (vínculo con Google por `sub`) |
 | `0009_email_verification.sql` | `email_verification_codes` (código de confirmación hasheado, vencimiento e intentos) |
+| `0010_disable_email_verification.sql` | Verifica las cuentas existentes y elimina códigos pendientes; el alta ya no exige confirmación |
 
 Reglas para quien continúe:
 
@@ -313,25 +356,24 @@ Todas las rutas privadas verifican sesión **y** pertenencia al tenant en el
 servidor. Nunca confíes en el `tenant_id` que venga del cliente.
 
 Las rutas de escritura (productos, imágenes, inventario y espacios de trabajo)
-además exigen `users.email_verified = 1`: si el correo no está confirmado
-responden `403` con `code: "email_not_verified"`.
+además exigen `users.email_verified = 1`. La comprobación se mantiene por
+seguridad, pero las cuentas nuevas y las existentes ya quedan verificadas.
 
-### Verificación de correo
+### Verificación de correo (flujo heredado)
 
-- Al registrarse con correo y contraseña la cuenta nace con
-  `email_verified = 0` y se guarda un código de **6 dígitos** en
-  `email_verification_codes` (solo el hash SHA-256 con el `user_id` como sal).
-- El código se envía desde `tellezsoftware@gmail.com` mediante el relay de
-  Google Apps Script (`scripts/gmail-relay.gs`). Si el relay no está
-  configurado, se intenta el Worker `nouboracatalog-mailer` (Cloudflare Email
-  Sending, requiere dominio) y en local `EMAIL`. Vence en **10 minutos**, admite
-  **5 intentos** y se puede reenviar cada **60 segundos** (máximo 5 envíos por
-  hora).
-- Hasta confirmarlo la cuenta solo ve el panel: no hay acceso a configuración,
-  productos, inventario ni ajustes, y el servidor rechaza cualquier escritura.
-- Las cuentas creadas con Google ya vienen verificadas por Google.
-- Migración `0009`: las cuentas anteriores a la regla quedan marcadas como
-  verificadas para no bloquear a los usuarios existentes.
+- El alta actual con correo y contraseña **no exige verificación**: la cuenta se
+  crea con `email_verified = 1`, no se envía ningún código y pasa directamente a
+  la configuración del negocio.
+- Las cuentas creadas con Google también entran verificadas.
+- Migración `0010_disable_email_verification.sql`: marca como verificadas las
+  cuentas existentes que aún no habían confirmado y elimina los códigos
+  pendientes.
+- La pantalla independiente, los endpoints `/api/auth/verification/*`, el correo
+  de confirmación y el relay de Gmail se conservan para el flujo heredado, pero
+  el registro ya no los usa.
+- Para referencia del flujo heredado: el correo usa el remitente
+  **TellezSoftware** y un diseño minimalista inspirado en GitHub; el código y el
+  botón **Copiar código** abren `/copiar-codigo#<código>`.
 
 Configuración de envío (Gmail):
 
@@ -347,7 +389,7 @@ Configuración de envío (Gmail):
    ```
 
 3. `MAIL_FROM` por defecto es `tellezsoftware@gmail.com` y `MAIL_FROM_NAME` es
-   `Noubora Catalog`; se pueden sobrescribir en Pages.
+   `TellezSoftware`; se pueden sobrescribir en Pages.
 4. Alternativa con dominio propio: habilitar Email Sending en el dominio,
    desplegar `nouboracatalog-mailer` (`npm run deploy:mailer`) y mantener el
    service binding `MAILER`.
@@ -441,10 +483,11 @@ El dominio **no requiere un proyecto nuevo**. Pasos:
 1. Comprar el dominio (Cloudflare Registrar lo vende a precio de costo).
 2. En Pages → proyecto `nouboracatalog` → *Custom domains* → añadir
    `noubora.com` y `www.noubora.com`. Cloudflare crea el DNS y el certificado.
-3. Google Cloud → Credentials → cliente OAuth → añadir:
+3. Google Auth Platform → Clientes → cliente `Noubora Catalog Web` → añadir:
    - Redirect URI: `https://noubora.com/api/auth/google/callback`
    - Origen JS: `https://noubora.com`
-   Dejar las anteriores activas al menos una semana.
+   - Dominio autorizado: `noubora.com`
+   Dejar los anteriores activos al menos una semana.
 4. Actualizar en `index.html`: `og:url`, `og:image`, `twitter:image`.
 5. Actualizar los enlaces del sitio corporativo (`site/index.html` y
    `site/en/index.html`) que hoy apuntan a `https://nouboracatalog.pages.dev`.

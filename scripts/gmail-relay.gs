@@ -17,7 +17,7 @@
  */
 
 const SECRET = 'CAMBIA_ESTE_SECRETO_POR_UNO_LARGO_Y_ALEATORIO'
-const FROM_NAME = 'Noubora Catalog'
+const FROM_NAME = 'TellezSoftware'
 
 function doPost(e) {
   try {

@@ -18,6 +18,7 @@ Pages.
 | [DISENO.md](./DISENO.md) | Sistema visual reutilizable: medidas, contenedores, botones y animación |
 | [PRICING.md](./PRICING.md) | Planes, precios y reglas de facturación |
 | [Guia-Google-OAuth-Cloudflare.md](./Guia-Google-OAuth-Cloudflare.md) | Configurar Google OAuth en Cloudflare |
+| [PENDIENTES.md](./PENDIENTES.md) | Estado de la última sesión y tareas que quedan |
 
 ## Stack
 
@@ -78,4 +79,4 @@ npm test
 | `scripts/` | Aprovisionamiento de Cloudflare y pruebas de API local |
 | `workers/` | Worker interno de correo (`nouboracatalog-mailer`) |
 | `tests/` | Pruebas con `node:test` |
-| `public/` | Logos, iconos, manifiesto y service worker |
+| `public/` | Logos, iconos, manifiesto, service worker, privacidad y copia de códigos |

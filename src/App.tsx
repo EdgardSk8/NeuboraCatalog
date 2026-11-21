@@ -110,7 +110,7 @@ const copy = {
     email: 'Correo electrónico', password: 'Contraseña', signIn: 'Iniciar sesión', register: 'Crear cuenta', currency: 'Moneda',
     clothing: 'Ropa y calzado', hardware: 'Ferretería', solidGoods: 'Productos sólidos', personalProfile: 'Inventario personal',
     businessName: 'Nombre del negocio', createWorkspace: 'Crear cuenta', authTitle: 'Gestiona tu negocio con claridad',
-    setupAfterSignUp: 'Después de confirmar tu correo, configurarás tu negocio.',
+    setupAfterSignUp: 'Configura tu negocio después de crear la cuenta.',
     accountConfigTitle: 'Configurar cuenta', accountConfigSub: 'Adapta el inventario a tu negocio y define cómo se mostrarán tus precios.',
     businessTypeHelp: 'Esto adapta las categorías y los campos sugeridos al agregar productos. Puedes comenzar y configurarlo aquí cuando estés listo.',
     currencyHelp: 'Esta moneda se usa para mostrar costos y precios. Solo se puede cambiar antes de registrar productos.',
@@ -131,10 +131,12 @@ const copy = {
     verifySendError: 'No se pudo enviar el código. Inténtalo de nuevo.',
     verifySuccess: 'Correo confirmado. Ya puedes usar el servicio.',
     verifyInvalid: 'Escribe los 6 dígitos del código.',
-    verifyLockedBody: 'La cuenta queda limitada al panel hasta confirmar el correo.',
+    verifyLockedBody: 'Solo podrás entrar al panel después de confirmar tu correo.',
     verifyRequiredToUse: 'Confirma tu correo para usar el servicio.',
     verifyResendHint: 'Revisa la carpeta de spam si no lo encuentras.',
     verifyLocalHint: 'En local el correo no sale: el código se imprime en la consola de wrangler.',
+    verifyPageStep: 'Paso previo a la configuración de tu negocio.',
+    verifyBack: 'Usar otra cuenta',
     authUnavailable: 'No se pudo conectar al API de Pages. Ejecuta npm run dev:stack para usar autenticación local.',
     loading: 'Conectando...', account: 'Cuenta',
     available: 'Disponibles', attention: 'Necesitan atención', outOfStock: 'Agotados', recentProducts: 'Productos recientes',
@@ -197,7 +199,7 @@ const copy = {
     email: 'Email address', password: 'Password', signIn: 'Sign in', register: 'Create account', currency: 'Currency',
     clothing: 'Clothing & footwear', hardware: 'Hardware', solidGoods: 'Consumer goods', personalProfile: 'Personal inventory',
     businessName: 'Business name', createWorkspace: 'Create account', authTitle: 'Run your business with clarity',
-    setupAfterSignUp: 'After confirming your email, you will set up your business.',
+    setupAfterSignUp: 'Set up your business after creating your account.',
     accountConfigTitle: 'Configure account', accountConfigSub: 'Tailor your inventory to your business and choose how prices are displayed.',
     businessTypeHelp: 'This adapts suggested categories and fields when adding products. You can start now and set it here when you are ready.',
     currencyHelp: 'This currency is used to display costs and prices. It can only be changed before products are recorded.',
@@ -218,10 +220,12 @@ const copy = {
     verifySendError: 'The code could not be sent. Try again.',
     verifySuccess: 'Email confirmed. You can use the service now.',
     verifyInvalid: 'Enter the 6 digits of the code.',
-    verifyLockedBody: 'The account stays limited to the dashboard until the email is confirmed.',
+    verifyLockedBody: 'You can enter the dashboard only after confirming your email.',
     verifyRequiredToUse: 'Confirm your email to use the service.',
     verifyResendHint: 'Check your spam folder if you cannot find it.',
     verifyLocalHint: 'Locally the email is not sent: the code is printed in the wrangler console.',
+    verifyPageStep: 'This step comes before setting up your business.',
+    verifyBack: 'Use another account',
     authUnavailable: 'Could not connect to the Pages API. Run npm run dev:stack to use local authentication.',
     loading: 'Connecting...', account: 'Account',
     available: 'Available', attention: 'Need attention', outOfStock: 'Out of stock', recentProducts: 'Recent products',
@@ -699,18 +703,33 @@ function stockState(product: Product): 'in' | 'low' | 'out' {
 // Solo para pruebas locales: `wrangler pages dev` simula el envío del correo.
 const isLocalHost = /^(?:localhost|127\.0\.0\.1|\[::1\])$/u.test(window.location.hostname)
 
-function EmailVerificationCard({ t, language, email, onVerified }: {
+function EmailVerificationPage({ t, language, email, onVerified, onBack, onLanguageChange }: {
   t: Texts
   language: Language
   email: string
   onVerified: () => Promise<void>
+  onBack: () => void
+  onLanguageChange: (language: Language) => void
 }) {
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(() => {
+    try {
+      const pending = window.sessionStorage.getItem('noubora-verification-code') ?? ''
+      window.sessionStorage.removeItem('noubora-verification-code')
+      return /^\d{6}$/u.test(pending) ? pending : ''
+    } catch {
+      return ''
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [cooldown, setCooldown] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -757,44 +776,73 @@ function EmailVerificationCard({ t, language, email, onVerified }: {
   }
 
   return (
-    <section className="panel verify-panel" aria-labelledby="verify-title">
-      <div className="verify-page-head">
-        <span className="verify-icon" aria-hidden="true"><MailCheck size={16} /></span>
-        <div className="verify-copy">
-          <h2 id="verify-title">{t.verifyTitle}</h2>
-          <p>{t.verifySub.replace('{email}', email)}</p>
-        </div>
+    <main
+      className="verify-screen"
+      style={{ backgroundImage: 'radial-gradient(900px 520px at 8% -5%, #e2f6ed 0%, transparent 62%), radial-gradient(700px 420px at 98% 100%, #f8e5f7 0%, transparent 60%), radial-gradient(520px 320px at 90% 8%, #f9ebea 0%, transparent 65%)' }}
+    >
+      <header className="verify-screen-top">
+        <a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio">
+          <span className="brand-mark"><img src="/logo.png" alt="" /></span>
+          <span>Noubora<span className="brand-light">Catalog</span></span>
+        </a>
+        <button className="language-toggle" type="button" onClick={() => onLanguageChange(language === 'es' ? 'en' : 'es')} aria-label="Change language">
+          {language === 'es' ? 'ES' : 'EN'} <ChevronDown size={13} />
+        </button>
+      </header>
+
+      <div className="verify-screen-stage">
+        <section className="verify-screen-card" aria-labelledby="verify-title">
+          <span className="verify-screen-accent" aria-hidden="true" />
+          <div className="verify-screen-icon" aria-hidden="true"><MailCheck size={28} /></div>
+          <p className="verify-screen-eyebrow">TellezSoftware</p>
+          <h1 id="verify-title">{t.verifyTitle}</h1>
+          <p className="verify-screen-copy">{t.verifySub.replace('{email}', email)}</p>
+
+          <form className="verify-screen-form" onSubmit={(event) => void confirm(event)}>
+            <label className="field verify-screen-field">
+              <span>{t.verifyCode}</span>
+              <input
+                ref={inputRef}
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/gu, '').slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'verify-error' : undefined}
+              />
+            </label>
+            <div className="verify-screen-actions">
+              <button type="submit" className="primary-button" disabled={busy || code.length !== 6}>
+                {busy ? t.loading : t.verifyAction}
+              </button>
+              <button type="button" className="outline-button" disabled={sending || cooldown > 0} onClick={() => void resend()}>
+                {cooldown > 0
+                  ? t.verifyResendIn.replace('{seconds}', String(cooldown))
+                  : sending ? t.loading : t.verifyResend}
+              </button>
+            </div>
+          </form>
+
+          {error && <p className="verify-screen-message verify-screen-error" id="verify-error" role="alert">{error}</p>}
+          {!error && info && <p className="verify-screen-message" role="status">{info}</p>}
+          <p className="verify-screen-hint">{t.verifyLockedBody} {t.verifyResendHint}</p>
+          {isLocalHost && <p className="verify-screen-hint verify-screen-dev">{t.verifyLocalHint}</p>}
+
+          <div className="verify-screen-footer">
+            <span>{t.verifyPageStep}</span>
+            <button type="button" className="verify-screen-back" onClick={onBack}>{t.verifyBack}</button>
+          </div>
+        </section>
       </div>
-      <form className="verify-form" onSubmit={(event) => void confirm(event)}>
-        <label className="field verify-field">
-          <span>{t.verifyCode}</span>
-          <input
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/gu, '').slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            placeholder="000000"
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? 'verify-error' : undefined}
-          />
-        </label>
-        <div className="verify-actions">
-          <button type="submit" className="primary-button" disabled={busy || code.length !== 6}>
-            {busy ? t.loading : t.verifyAction}
-          </button>
-          <button type="button" className="outline-button" disabled={sending || cooldown > 0} onClick={() => void resend()}>
-            {cooldown > 0
-              ? t.verifyResendIn.replace('{seconds}', String(cooldown))
-              : sending ? t.loading : t.verifyResend}
-          </button>
-        </div>
-      </form>
-      {error && <p className="verify-message verify-error" id="verify-error" role="alert">{error}</p>}
-      {!error && info && <p className="verify-message" role="status">{info}</p>}
-      <p className="verify-hint">{t.verifyLockedBody} {t.verifyResendHint}</p>
-      {isLocalHost && <p className="verify-hint verify-hint-dev">{t.verifyLocalHint}</p>}
-    </section>
+
+      <footer className="verify-screen-bottom">
+        <span>© 2026 TellezSoftware</span>
+        <a href="/terminos">{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a>
+        <a href="/privacidad">{language === 'es' ? 'Privacidad' : 'Privacy'}</a>
+      </footer>
+    </main>
   )
 }
 
@@ -879,8 +927,8 @@ function WorkspaceApp() {
   }, [productPageKey, query, showArchived, stockFilter, t.authUnavailable])
 
   const unverified = Boolean(session && !session.user.emailVerified)
-  // Sin verificación no hay más pantalla que el panel.
-  const activePage: Page = unverified ? 'dashboard' : page
+  // La verificación se muestra como pantalla independiente, antes de la configuración.
+  const activePage: Page = page
 
   function blockIfUnverified(): boolean {
     if (!unverified) return false
@@ -893,8 +941,8 @@ function WorkspaceApp() {
     loadApiWorkspace().then((workspace) => {
       if (!active) return
       setSession(workspace.session)
-      // Sin confirmar el correo la cuenta se queda en el panel: la
-      // configuración del negocio empieza después de la verificación.
+      // Sin confirmar el correo se muestra la pantalla de verificación:
+      // la configuración del negocio empieza después de confirmarlo.
       if (workspace.session.user.emailVerified
         && !workspace.session.tenant.setupCompleted
         && workspace.session.tenant.role === 'owner') {
@@ -988,7 +1036,7 @@ function WorkspaceApp() {
   async function register(email: string, password: string, acceptedTermsVersion: string) {
     await requestApi('/api/auth/register', { email, password, acceptedTermsVersion, language })
     await refreshWorkspace()
-    // La cuenta nace sin confirmar: solo dashboard hasta verificar el correo.
+    // La cuenta nace sin confirmar: se muestra la pantalla de verificación.
     setPage('dashboard')
     if (showsSignIn) window.history.replaceState(null, '', '/')
   }
@@ -1358,6 +1406,17 @@ function WorkspaceApp() {
     return <LandingPage language={language} onLanguageChange={setLanguage} />
   }
 
+  if (session && !session.user.emailVerified) {
+    return <EmailVerificationPage
+      t={t}
+      language={language}
+      email={session.user.email}
+      onVerified={completeVerification}
+      onBack={() => { void returnToSignIn() }}
+      onLanguageChange={setLanguage}
+    />
+  }
+
   if (session && session.user.emailVerified && (!session.tenant.setupCompleted || activePage === 'setup')) {
     return <WorkspaceSetupPage
       t={t} language={language} name={setupName} setName={setSetupName}
@@ -1454,14 +1513,6 @@ function WorkspaceApp() {
         </header>
 
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain px-3 pb-2 pt-3 min-[851px]:px-4 min-[851px]:pt-4 max-[620px]:px-3">
-          {session && !session.user.emailVerified && (
-            <EmailVerificationCard
-              t={t}
-              language={language}
-              email={session.user.email}
-              onVerified={completeVerification}
-            />
-          )}
           {apiStatus === 'unavailable' && <div className="api-warning" role="status"><CircleHelp size={15} /><span>{t.authUnavailable}</span></div>}
           {activePage === 'dashboard' && (
             <>
@@ -1850,14 +1901,14 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
             : (language === 'es' ? 'Continuar con Google' : 'Continue with Google')}
         </button>
         {mode === 'register' && !acceptedTerms && <small className="google-hint">{language === 'es' ? 'Acepta los términos para continuar con Google.' : 'Accept the terms to continue with Google.'}</small>}
-        {mode === 'login' && <small className="google-hint">{language === 'es' ? 'Al continuar con Google aceptas los ' : 'By continuing with Google you accept the '}<a href="/terminos">{language === 'es' ? 'Términos y condiciones' : 'Terms and conditions'}</a>.</small>}
+        {mode === 'login' && <small className="google-hint">{language === 'es' ? 'Al continuar con Google aceptas los ' : 'By continuing with Google you accept the '}<a href="/terminos">{language === 'es' ? 'Términos y condiciones' : 'Terms and conditions'}</a>{language === 'es' ? ' y la ' : ' and the '}<a href="/privacidad">{language === 'es' ? 'Política de privacidad' : 'Privacy Policy'}</a>.</small>}
         {(googleError || oauthErrorMessage) && <p className="form-error" role="alert">{googleError || oauthErrorMessage}</p>}
         <div className="auth-divider">{language === 'es' ? 'o' : 'or'}</div>
         <form className="flex flex-col gap-2.5" onSubmit={submit}>
           {mode === 'register' && <small className="password-hint">{t.setupAfterSignUp}</small>}
           <label className="field"><span>{t.email} *</span><input autoFocus={mode === 'login'} required type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@ejemplo.com" /></label>
           <label className="field"><span>{t.password} *</span><input required type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'register' ? 12 : 1} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••••••" /><small className="password-hint">{mode === 'register' ? t.passwordHint : ''}</small></label>
-          {mode === 'register' && <label className="terms-acceptance"><input type="checkbox" required checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span>{language === 'es' ? <>He leído y acepto los <a href="/terminos" target="_blank" rel="noreferrer">Términos y condiciones</a> (versión {CURRENT_TERMS_VERSION}).</> : <>I have read and agree to the <a href="/terminos?lang=en" target="_blank" rel="noreferrer">Terms and Conditions</a> (version {CURRENT_TERMS_VERSION}).</>}</span></label>}
+          {mode === 'register' && <label className="terms-acceptance"><input type="checkbox" required checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /><span>{language === 'es' ? <>He leído y acepto los <a href="/terminos" target="_blank" rel="noreferrer">Términos y condiciones</a> (versión {CURRENT_TERMS_VERSION}) y la <a href="/privacidad" target="_blank" rel="noreferrer">Política de privacidad</a>.</> : <>I have read and agree to the <a href="/terminos?lang=en" target="_blank" rel="noreferrer">Terms and Conditions</a> (version {CURRENT_TERMS_VERSION}) and the <a href="/privacidad" target="_blank" rel="noreferrer">Privacy Policy</a>.</>}</span></label>}
           {error && <p className="form-error" role="alert">{error}</p>}
           <button type="submit" className="primary-button mt-0.5 h-9 w-full justify-center disabled:cursor-wait disabled:opacity-70" disabled={busy}>{busy ? t.loading : mode === 'login' ? t.signIn : t.createWorkspace}<ChevronRight className="ml-auto" size={17} /></button>
         </form>
@@ -1865,7 +1916,7 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
         <p className="mt-4 text-center text-[10px] leading-[1.5] text-[#a1aaa4]">{language === 'es' ? 'Al crear una cuenta, tus datos se guardan en la base de datos configurada para esta aplicación.' : 'When you create an account, your data is saved in this application database.'}</p>
       </section>
     </div>
-    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
+    <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="/privacidad">{language === 'es' ? 'Privacidad' : 'Privacy'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
   </main>
 }
 

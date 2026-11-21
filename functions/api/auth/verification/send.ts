@@ -21,7 +21,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }, 429, { 'Retry-After': String(result.retryAfter) })
   }
 
-  const delivered = await sendVerificationEmail(env, session.email, result.code, language)
+  const delivered = await sendVerificationEmail(env, session.email, result.code, language, new URL(request.url).origin)
 
   if (!delivered) {
     return json({

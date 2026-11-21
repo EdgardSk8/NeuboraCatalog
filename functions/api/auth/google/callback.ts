@@ -104,12 +104,46 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     return redirectTo(`${origin}/`, [sessionCookie, clearCookie])
   }
 
-  // No se fusionan cuentas automáticamente: si el correo ya existe con otro
-  // método de acceso, se pide iniciar sesión con ese método.
+  // Si el correo ya existe con contraseña, se vincula la identidad de Google a
+  // esa misma cuenta. Google ya confirmó que el correo pertenece al usuario.
   const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?1 LIMIT 1')
     .bind(email)
     .first<{ id: string }>()
-  if (existing) return fail('cuenta_existente')
+  if (existing) {
+    const membership = await env.DB.prepare(`
+      SELECT tenant_memberships.tenant_id
+      FROM tenant_memberships
+      JOIN tenants ON tenants.id = tenant_memberships.tenant_id
+      WHERE tenant_memberships.user_id = ?1
+      ORDER BY tenant_memberships.created_at ASC, tenants.created_at ASC, tenants.name COLLATE NOCASE ASC
+      LIMIT 1
+    `)
+      .bind(existing.id)
+      .first<{ tenant_id: string }>()
+
+    if (!membership) return fail('sin_espacio')
+
+    try {
+      await env.DB.batch([
+        env.DB.prepare(`
+          INSERT INTO oauth_accounts (provider, provider_uid, user_id, created_at)
+          VALUES ('google', ?1, ?2, ?3)
+        `).bind(providerUid, existing.id, now),
+        env.DB.prepare(`
+          UPDATE users SET email_verified = 1 WHERE id = ?1
+        `).bind(existing.id),
+        env.DB.prepare(`
+          INSERT INTO sessions (token_hash, user_id, tenant_id, expires_at, created_at, last_seen_at)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?5)
+        `).bind(tokenHash, existing.id, membership.tenant_id, expiresAt, now),
+      ])
+    } catch (error) {
+      console.error('Google account linking failed.', error)
+      return fail('vinculacion_fallida')
+    }
+
+    return redirectTo(`${origin}/`, [sessionCookie, clearCookie])
+  }
 
   const userId = crypto.randomUUID()
   const tenantId = crypto.randomUUID()

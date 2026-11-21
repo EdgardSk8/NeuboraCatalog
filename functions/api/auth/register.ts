@@ -1,7 +1,5 @@
 import { hashPassword } from '../../_lib/auth'
-import { sendVerificationEmail } from '../../_lib/email'
 import { json, isSameOrigin, randomToken, readJsonObject, secureCookie, sha256 } from '../../_lib/http'
-import { issueVerificationCode } from '../../_lib/verification'
 import { CURRENT_TERMS_VERSION } from '../../../shared/terms'
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -14,7 +12,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
   const password = typeof body.password === 'string' ? body.password : ''
   const acceptedTermsVersion = typeof body.acceptedTermsVersion === 'string' ? body.acceptedTermsVersion : ''
-  const language = body.language === 'en' ? 'en' : 'es'
 
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) {
     return json({ error: 'Ingresa un correo electrónico válido.' }, 400)
@@ -47,10 +44,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       `).bind(tenantId, 'Cuenta nueva', slug, 'solid_goods', 'general', 'NIO', now),
       env.DB.prepare(`
         INSERT INTO users (
-          id, email, password_hash, password_salt, password_iterations,
+          id, email, email_verified, password_hash, password_salt, password_iterations,
           terms_accepted_version, terms_accepted_at, created_at
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
+        VALUES (?1, ?2, 1, ?3, ?4, ?5, ?6, ?7, ?7)
       `).bind(
         userId, email, passwordRecord.hash, passwordRecord.salt,
         passwordRecord.iterations, CURRENT_TERMS_VERSION, now,
@@ -69,19 +66,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'No se pudo completar el registro. Inténtalo de nuevo.' }, 500)
   }
 
-  // La cuenta nace sin confirmar: el correo lleva el código y hasta usarlo
-  // el usuario solo puede ver el panel.
-  const issued = await issueVerificationCode(env.DB, userId, Date.now())
-  const emailSent = issued.ok && await sendVerificationEmail(env, email, issued.code, language)
-
+  // La cuenta queda activa al crearse: no se exige confirmación por correo.
   return json({
-    user: { id: userId, email, emailVerified: false },
+    user: { id: userId, email, emailVerified: true },
     tenant: { id: tenantId, name: 'Cuenta nueva', slug, profile: 'solid_goods', businessType: 'general', currency: 'NIO', setupCompleted: false },
-    verification: {
-      required: true,
-      emailSent,
-      expiresInMinutes: issued.ok ? Math.round((Date.parse(issued.expiresAt) - Date.now()) / 60_000) : 0,
-      retryAfter: issued.ok ? issued.retryAfter : 60,
-    },
+    verification: { required: false },
   }, 201, { 'Set-Cookie': secureCookie(sessionToken, SESSION_TTL_SECONDS) })
 }

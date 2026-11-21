@@ -1,5 +1,5 @@
-import { getCookie, isSameOrigin, json, readJsonObject, sha256 } from '../../_lib/http'
-import { emailVerificationResponse, getAuthenticatedSession, getSessionCookieName } from '../../_lib/auth'
+import { isSameOrigin, json, readJsonObject, sha256 } from '../../_lib/http'
+import { emailVerificationResponse, getAuthenticatedSession, readSessionToken } from '../../_lib/auth'
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!isSameOrigin(request)) return json({ error: 'Solicitud de origen no permitido.' }, 403)
@@ -13,7 +13,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'Selecciona un negocio válido.' }, 400)
   }
 
-  const token = getCookie(request, getSessionCookieName())
+  const token = readSessionToken(request)
   if (!token) return json({ error: 'La sesión ya no es válida. Inicia sesión de nuevo.' }, 401)
   const tokenHash = await sha256(token)
   const result = await env.DB.prepare(`

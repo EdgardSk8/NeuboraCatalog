@@ -37,8 +37,21 @@ export function isSameOrigin(request: Request): boolean {
   }
 }
 
-export function secureCookie(value: string, maxAge: number): string {
-  return `__Host-tellez-session=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`
+export function isHttpsRequest(request: Request): boolean {
+  return new URL(request.url).protocol === 'https:'
+}
+
+// La cookie de producción usa el prefijo `__Host-`, que exige `Secure` y solo
+// funciona sobre HTTPS. En desarrollo (http://localhost o la IP de la red
+// local) se usa un nombre sin prefijo para que la sesión sí se guarde.
+export const HOST_SESSION_COOKIE = '__Host-tellez-session'
+export const LOCAL_SESSION_COOKIE = 'tellez-session'
+
+export function sessionCookie(value: string, maxAge: number, secure: boolean): string {
+  const attributes = [`${secure ? HOST_SESSION_COOKIE : LOCAL_SESSION_COOKIE}=${value}`, 'Path=/', 'HttpOnly']
+  if (secure) attributes.push('Secure')
+  attributes.push('SameSite=Lax', `Max-Age=${maxAge}`)
+  return attributes.join('; ')
 }
 
 export function getCookie(request: Request, name: string): string | null {

@@ -36,7 +36,8 @@ import {
 import { CURRENT_TERMS_VERSION } from '../shared/terms'
 import { BUSINESS_TYPES, businessGroupForType, isBusinessType, isSelectableBusinessType, type BusinessType } from '../shared/business-types'
 import { COUNTRIES, isCountryCode, type CountryCode } from '../shared/locations'
-import { productKindForCategory, type ProductKind } from '../shared/product-categories'
+import { productKindForCategory } from '../shared/product-categories'
+import { productFormProfile } from '../shared/product-form-profile'
 import { TermsPage } from './TermsPage'
 import { LandingPage } from './LandingPage'
 import './App.css'
@@ -169,8 +170,9 @@ const copy = {
     previousQuantity: 'Antes', newQuantity: 'Después',
     comingSoon: 'En preparación', comingSoonHint: 'Esta sección forma parte de las siguientes etapas del proyecto.',
     margin: 'Margen estimado', welcomeBack: '¡Qué bueno verte de nuevo!',
-    manageImages: 'Gestionar imágenes', addImages: 'Agregar imágenes', imageCount: 'Imágenes',
-    imageUploadHint: 'Se convierten a WebP y se optimizan a un máximo de 150 KiB cada una.',
+    manageImages: 'Gestionar imágenes', addImages: 'Agregar imágenes',
+    imageUploadHint: 'Hasta 5 imágenes por producto.',
+    optimizingImages: 'Optimizando imágenes…',
     imageLimit: 'Puedes agregar hasta 5 imágenes por producto.',
     productSavedImageError: 'Producto guardado, pero algunas imágenes no se pudieron subir.',
     imageLoadError: 'No se pudieron cargar las imágenes del producto.',
@@ -258,8 +260,9 @@ const copy = {
     previousQuantity: 'Before', newQuantity: 'After',
     comingSoon: 'Coming soon', comingSoonHint: 'This section is part of the next project milestones.',
     margin: 'Estimated margin', welcomeBack: 'Welcome back!',
-    manageImages: 'Manage images', addImages: 'Add images', imageCount: 'Images',
-    imageUploadHint: 'Images are converted to WebP and optimized to a maximum of 150 KiB each.',
+    manageImages: 'Manage images', addImages: 'Add images',
+    imageUploadHint: 'Up to 5 images per product.',
+    optimizingImages: 'Optimizing images…',
     imageLimit: 'You can add up to 5 images per product.',
     productSavedImageError: 'Product saved, but some images could not be uploaded.',
     imageLoadError: 'Could not load product images.',
@@ -329,19 +332,6 @@ function dashboardContext(businessType: BusinessType, language: Language): strin
   return contexts[businessType][language]
 }
 
-function variantFieldCopy(kind: ProductKind, language: Language): { label: string; placeholder: string } {
-  const copyByKind: Record<ProductKind, { es: { label: string; placeholder: string }; en: { label: string; placeholder: string } }> = {
-    clothing: { es: { label: 'Color o talla (opcional)', placeholder: 'Ej. Azul / Talla M' }, en: { label: 'Color or size (optional)', placeholder: 'e.g. Blue / Size M' } },
-    hardware: { es: { label: 'Medida o material (opcional)', placeholder: 'Ej. 1/2 pulg. / acero' }, en: { label: 'Size or material (optional)', placeholder: 'e.g. 1/2 in / steel' } },
-    electronics: { es: { label: 'Modelo o especificación (opcional)', placeholder: 'Ej. 128 GB / negro' }, en: { label: 'Model or specification (optional)', placeholder: 'e.g. 128 GB / black' } },
-    auto_parts: { es: { label: 'Compatibilidad (opcional)', placeholder: 'Ej. Modelo / año' }, en: { label: 'Compatibility (optional)', placeholder: 'e.g. Model / year' } },
-    food: { es: { label: 'Peso o presentación (opcional)', placeholder: 'Ej. 500 g / paquete' }, en: { label: 'Weight or packaging (optional)', placeholder: 'e.g. 500 g / package' } },
-    beverages: { es: { label: 'Volumen o presentación (opcional)', placeholder: 'Ej. 750 ml / caja de 12' }, en: { label: 'Volume or packaging (optional)', placeholder: 'e.g. 750 ml / case of 12' } },
-    general: { es: { label: 'Detalle adicional (opcional)', placeholder: 'Ej. Material o presentación' }, en: { label: 'Additional detail (optional)', placeholder: 'e.g. Material or packaging' } },
-  }
-  return copyByKind[kind][language]
-}
-
 function unitText(unit: string, t: Texts): string {
   const units: Record<string, string> = {
     unidad: t.eachUnit,
@@ -357,48 +347,6 @@ function unitText(unit: string, t: Texts): string {
     rollo: t.rollUnit,
   }
   return units[unit] ?? unit
-}
-
-function defaultUnit(businessType: BusinessType): string {
-  if (businessType === 'liquor') return 'botella'
-  if (businessType === 'food') return 'kilogramo'
-  return 'unidad'
-}
-
-function unitsForProductKind(kind: ProductKind): string[] {
-  switch (kind) {
-    case 'clothing':
-      return ['unidad', 'paquete', 'caja']
-    case 'hardware':
-      return ['unidad', 'caja', 'paquete', 'metro', 'centímetro', 'kilogramo', 'gramo', 'rollo']
-    case 'auto_parts':
-    case 'electronics':
-      return ['unidad', 'caja', 'paquete']
-    case 'food':
-      return ['kilogramo', 'gramo', 'unidad', 'paquete', 'caja', 'litro']
-    case 'beverages':
-      return ['botella', 'caja', 'litro', 'galón']
-    case 'general':
-      return ['unidad', 'caja', 'paquete', 'kilogramo', 'litro']
-  }
-}
-
-function categorySuggestions(businessType: BusinessType, language: Language): string[] {
-  const suggestions: Record<BusinessType, { es: string[]; en: string[] }> = {
-    clothing: { es: ['Ropa', 'Calzado', 'Accesorios'], en: ['Clothing', 'Footwear', 'Accessories'] },
-    hardware: { es: ['Herramientas', 'Materiales', 'Repuestos'], en: ['Tools', 'Materials', 'Auto parts'] },
-    electronics: { es: ['Tecnología', 'Celulares', 'Accesorios'], en: ['Technology', 'Phones', 'Accessories'] },
-    auto_parts: { es: ['Repuestos', 'Frenos', 'Motor'], en: ['Auto parts', 'Brakes', 'Engine'] },
-    food: { es: ['Alimentos', 'Granos', 'Bebidas'], en: ['Food', 'Grains', 'Beverages'] },
-    liquor: { es: ['Bebidas', 'Vinos', 'Licores'], en: ['Beverages', 'Wines', 'Liquor'] },
-    general: { es: ['Hogar', 'Oficina', 'Tecnología', 'Ropa', 'Bebidas'], en: ['Home', 'Office', 'Technology', 'Clothing', 'Beverages'] },
-    personal: { es: ['Hogar', 'Oficina', 'Tecnología'], en: ['Home', 'Office', 'Technology'] },
-  }
-  return suggestions[businessType][language]
-}
-
-function categoryPlaceholder(businessType: BusinessType, language: Language): string {
-  return `${language === 'es' ? 'Ej.' : 'e.g.'} ${categorySuggestions(businessType, language)[0]}`
 }
 
 class ApiResponseError extends Error {
@@ -702,6 +650,9 @@ function stockState(product: Product): 'in' | 'low' | 'out' {
 
 // Solo para pruebas locales: `wrangler pages dev` simula el envío del correo.
 const isLocalHost = /^(?:localhost|127\.0\.0\.1|\[::1\])$/u.test(window.location.hostname)
+
+// Solo en local: `npm run db:seed:dev` crea esta cuenta en la base D1 local.
+const DEV_ACCOUNT = { email: 'dev@noubora.local', password: 'noubora-dev-2026' }
 
 function EmailVerificationPage({ t, language, email, onVerified, onBack, onLanguageChange }: {
   t: Texts
@@ -1146,7 +1097,7 @@ function WorkspaceApp() {
     window.location.assign('/ingresar')
   }
 
-  async function saveProduct(product: Product, imageFiles: File[] = []) {
+  async function saveProduct(product: Product, imageBlobs: Blob[] = []) {
     if (session) {
       try {
         const isEditing = Boolean(editingProduct)
@@ -1194,10 +1145,9 @@ function WorkspaceApp() {
         setModalOpen(false)
         setEditingProduct(null)
         let uploadFailed = false
-        for (const file of imageFiles) {
+        for (const blob of imageBlobs) {
           try {
-            const optimized = await compressImage(file)
-            const uploaded = await requestImageApi(`/api/products/${encodeURIComponent(productId)}/images`, optimized)
+            const uploaded = await requestImageApi(`/api/products/${encodeURIComponent(productId)}/images`, blob)
             if (!savedProduct.imageUrl) {
               savedProduct = { ...savedProduct, imageUrl: uploaded.url }
               setProducts((current) => current.map((item) => item.id === productId ? savedProduct : item))
@@ -1521,19 +1471,19 @@ function WorkspaceApp() {
                 <button className="primary-button" onClick={openNewProduct}><Plus size={18} />{t.addProduct}</button>
               </div>
               <section className="stats-grid" aria-label="Business summary">
-                <StatCard label={t.totalProducts} value={products.length.toString()} icon={<Package size={18} />} tone="mint" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
-                <StatCard label={t.stockUnits} value={availableUnits.toLocaleString()} icon={<Warehouse size={18} />} tone="blue" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
-                <StatCard label={t.lowStock} value={lowProducts.length.toString()} icon={<SlidersHorizontal size={18} />} tone="peach" change={`${outProducts.length} ${language === 'es' ? 'agotados' : 'out of stock'}`} trend="neutral" note={t.attention} />
-                <StatCard label={t.inventoryValue} value={money(inventoryValue, session?.tenant.currency)} icon={<Tag size={18} />} tone="lilac" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
+                <StatCard label={t.totalProducts} value={products.length.toString()} icon={<Package size={18} />} tone="brand" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
+                <StatCard label={t.stockUnits} value={availableUnits.toLocaleString()} icon={<Warehouse size={18} />} tone="magenta" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
+                <StatCard label={t.lowStock} value={lowProducts.length.toString()} icon={<SlidersHorizontal size={18} />} tone="red" change={`${outProducts.length} ${language === 'es' ? 'agotados' : 'out of stock'}`} trend="neutral" note={t.attention} />
+                <StatCard label={t.inventoryValue} value={money(inventoryValue, session?.tenant.currency)} icon={<Tag size={18} />} tone="deep" change={session ? t.account : t.sampleData} trend="neutral" note={session ? t.accountData : t.localDemo} />
               </section>
               <div className="dashboard-grid">
                 <section className="panel inventory-overview">
                   <div className="panel-heading"><div><h2>{t.stockOverview}</h2><p>{t.stockOverviewSub}</p></div><button className="subtle-button" onClick={() => { if (blockIfUnverified()) return; setPage('inventory') }}>{t.viewAll}<ChevronRight size={15} /></button></div>
                   <div className="stock-chart">
-                    <div className="donut-wrap"><div className="donut-chart" style={{ background: `conic-gradient(#60c596 0 ${(products.length - lowProducts.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #e8b982 0 ${(products.length - outProducts.length) / Math.max(products.length, 1) * 100}%, #bf3b34 0 100%)` }}><div><strong>{products.length}</strong><span>{t.products.toLowerCase()}</span></div></div></div>
+                    <div className="donut-wrap"><div className="donut-chart" style={{ background: `conic-gradient(var(--brand) 0 ${(products.length - lowProducts.length - outProducts.length) / Math.max(products.length, 1) * 100}%, var(--accent-magenta) 0 ${(products.length - outProducts.length) / Math.max(products.length, 1) * 100}%, var(--accent-red) 0 100%)` }}><div><strong>{products.length}</strong><span>{t.products.toLowerCase()}</span></div></div></div>
                     <div className="stock-legend">
-                      <LegendRow color="green" label={t.available} value={products.length - lowProducts.length - outProducts.length} />
-                      <LegendRow color="orange" label={t.low} value={lowProducts.length} />
+                      <LegendRow color="brand" label={t.available} value={products.length - lowProducts.length - outProducts.length} />
+                      <LegendRow color="magenta" label={t.low} value={lowProducts.length} />
                       <LegendRow color="red" label={t.outOfStock} value={outProducts.length} />
                     </div>
                   </div>
@@ -1541,9 +1491,9 @@ function WorkspaceApp() {
                 </section>
                 <section className="panel quick-panel">
                   <div className="panel-heading"><div><h2>{t.quickActions}</h2><p>{t.quickActionsSub}</p></div></div>
-                  <button className="quick-action" onClick={openNewProduct}><span className="quick-icon mint"><Plus size={18} /></span><span><strong>{t.newProduct}</strong><small>{language === 'es' ? 'Agrega un artículo a tu catálogo' : 'Add an item to your catalog'}</small></span><ChevronRight size={17} /></button>
-                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('inventory'); setStockFilter('all'); setAdjustOpen(true) }}><span className="quick-icon blue"><Warehouse size={18} /></span><span><strong>{t.adjustStock}</strong><small>{language === 'es' ? 'Registra entradas y salidas' : 'Record stock in and out'}</small></span><ChevronRight size={17} /></button>
-                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('orders') }}><span className="quick-icon peach"><ClipboardList size={18} /></span><span><strong>{t.createOrder}</strong><small>{language === 'es' ? 'Registra una nueva operación' : 'Record a new transaction'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={openNewProduct}><span className="quick-icon brand"><Plus size={18} /></span><span><strong>{t.newProduct}</strong><small>{language === 'es' ? 'Agrega un artículo a tu catálogo' : 'Add an item to your catalog'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('inventory'); setStockFilter('all'); setAdjustOpen(true) }}><span className="quick-icon magenta"><Warehouse size={18} /></span><span><strong>{t.adjustStock}</strong><small>{language === 'es' ? 'Registra entradas y salidas' : 'Record stock in and out'}</small></span><ChevronRight size={17} /></button>
+                  <button className="quick-action" onClick={() => { if (blockIfUnverified()) return; setPage('orders') }}><span className="quick-icon red"><ClipboardList size={18} /></span><span><strong>{t.createOrder}</strong><small>{language === 'es' ? 'Registra una nueva operación' : 'Record a new transaction'}</small></span><ChevronRight size={17} /></button>
                 </section>
               </div>
               <ProductsTable products={products.slice(0, 5)} t={t} currency={session?.tenant.currency} onViewAll={() => { if (blockIfUnverified()) return; setPage('products') }} onManageImages={canManageProducts ? openImageManager : undefined} />
@@ -1627,7 +1577,7 @@ function ProductsTable({ products, t, currency, onViewAll, onEdit, onManageImage
       <tbody>{products.map((item) => {
         const state = stockState(item)
         const label = state === 'out' ? t.out : state === 'low' ? t.low : t.inStock
-        return <tr key={item.id}><td><div className="product-cell"><span className={`product-thumb ${item.category.toLowerCase().includes('ropa') ? 'thumb-pink' : item.category.toLowerCase().includes('herra') ? 'thumb-green' : item.category.toLowerCase().includes('tecnología') ? 'thumb-blue' : 'thumb-yellow'}`}>{item.imageUrl ? <img src={item.imageUrl} alt="" /> : <Package size={17} />}</span><span><strong>{item.name}</strong>{item.variant && <small>{item.variant}</small>}</span></div></td><td><span className="sku-text">{item.sku}</span></td><td>{item.category}</td><td><strong className={state === 'out' ? 'quantity-out' : ''}>{item.quantity}</strong><span className="unit-text"> {unitText(item.unit, t)}</span></td><td className="price-cell">{money(item.price, currency)}</td><td><span className={`status-pill status-${state}`}><i />{label}</span></td>{(onEdit || onManageImages || onArchive) && <td className="table-actions">{onManageImages && <button className="row-action" aria-label={`${t.manageImages}: ${item.name}`} title={t.manageImages} onClick={() => onManageImages(item)}><ImagePlus size={15} /></button>}{onEdit && <button className="row-action" aria-label={`${t.editProduct}: ${item.name}`} onClick={() => onEdit(item)}><Pencil size={14} /></button>}{onArchive && <button className="row-action" aria-label={`${item.archivedAt ? t.restoreProduct : t.archiveProduct}: ${item.name}`} title={item.archivedAt ? t.restoreProduct : t.archiveProduct} onClick={() => onArchive(item)}>{item.archivedAt ? <ArchiveRestore size={15} /> : <Archive size={15} />}</button>}</td>}</tr>
+        return <tr key={item.id}><td><div className="product-cell"><span className={`product-thumb ${item.category.toLowerCase().includes('ropa') ? 'thumb-red' : item.category.toLowerCase().includes('herra') ? 'thumb-green' : item.category.toLowerCase().includes('tecnología') ? 'thumb-magenta' : 'thumb-deep'}`}>{item.imageUrl ? <img src={item.imageUrl} alt="" /> : <Package size={17} />}</span><span><strong>{item.name}</strong>{item.variant && <small>{item.variant}</small>}</span></div></td><td><span className="sku-text">{item.sku}</span></td><td>{item.category}</td><td><strong className={state === 'out' ? 'quantity-out' : ''}>{item.quantity}</strong><span className="unit-text"> {unitText(item.unit, t)}</span></td><td className="price-cell">{money(item.price, currency)}</td><td><span className={`status-pill status-${state}`}><i />{label}</span></td>{(onEdit || onManageImages || onArchive) && <td className="table-actions">{onManageImages && <button className="row-action" aria-label={`${t.manageImages}: ${item.name}`} title={t.manageImages} onClick={() => onManageImages(item)}><ImagePlus size={15} /></button>}{onEdit && <button className="row-action" aria-label={`${t.editProduct}: ${item.name}`} onClick={() => onEdit(item)}><Pencil size={14} /></button>}{onArchive && <button className="row-action" aria-label={`${item.archivedAt ? t.restoreProduct : t.archiveProduct}: ${item.name}`} title={item.archivedAt ? t.restoreProduct : t.archiveProduct} onClick={() => onArchive(item)}>{item.archivedAt ? <ArchiveRestore size={15} /> : <Archive size={15} />}</button>}</td>}</tr>
       })}</tbody></table>
       {products.length === 0 && <div className="empty-state"><div><Package size={22} /></div><strong>{t.noResults}</strong><span>{t.noResultsHint}</span></div>}
     </div>
@@ -1861,6 +1811,20 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
     setAcceptedTerms(false)
   }
 
+  async function signInWithDevAccount() {
+    setError('')
+    setBusy(true)
+    try {
+      setEmail(DEV_ACCOUNT.email)
+      setPassword(DEV_ACCOUNT.password)
+      await onSignIn(DEV_ACCOUNT.email, DEV_ACCOUNT.password)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.authUnavailable)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return <main
     className="flex min-h-screen flex-col bg-[#f5faf8] px-4 py-6 min-[851px]:px-6"
     style={{ backgroundImage: 'radial-gradient(900px 520px at 8% -5%, #e2f6ed 0%, transparent 62%), radial-gradient(700px 420px at 98% 100%, #f8e5f7 0%, transparent 60%), radial-gradient(520px 320px at 90% 8%, #f9ebea 0%, transparent 65%)' }}
@@ -1913,12 +1877,21 @@ function AuthPage({ language, t, onLanguageChange, onSignIn, onRegister, initial
           <button type="submit" className="primary-button mt-0.5 h-9 w-full justify-center disabled:cursor-wait disabled:opacity-70" disabled={busy}>{busy ? t.loading : mode === 'login' ? t.signIn : t.createWorkspace}<ChevronRight className="ml-auto" size={17} /></button>
         </form>
         <p className="mt-3 text-center text-[10px] text-[#87948b]">{mode === 'login' ? t.noAccount : t.haveAccount}<button className="ml-1 border-0 bg-transparent p-0 font-bold text-[#106a40]" onClick={() => changeMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? t.createAccount : t.backToSignIn}</button></p>
+        {isLocalHost && <div className="dev-login">
+          <p><strong>{language === 'es' ? 'Entorno local' : 'Local environment'}</strong>{language === 'es' ? ' · Cuenta de prueba' : ' · Test account'}</p>
+          <p className="dev-login-credentials">{DEV_ACCOUNT.email} · {DEV_ACCOUNT.password}</p>
+          <button type="button" className="outline-button h-9 w-full justify-center disabled:cursor-wait disabled:opacity-70" disabled={busy} onClick={() => { void signInWithDevAccount() }}>{language === 'es' ? 'Entrar con la cuenta de prueba' : 'Sign in with the test account'}</button>
+        </div>}
         <p className="mt-4 text-center text-[10px] leading-[1.5] text-[#a1aaa4]">{language === 'es' ? 'Al crear una cuenta, tus datos se guardan en la base de datos configurada para esta aplicación.' : 'When you create an account, your data is saved in this application database.'}</p>
       </section>
     </div>
     <footer className="mx-auto flex w-full max-w-[1050px] justify-between gap-3 text-[10px] text-[#9ba69f] max-[620px]:flex-wrap max-[620px]:justify-center"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="/privacidad">{language === 'es' ? 'Privacidad' : 'Privacy'}</a><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href="mailto:tellezsoftware@gmail.com">tellezsoftware@gmail.com</a><span>Pages Functions + D1</span></footer>
   </main>
 }
+
+const MAX_PRODUCT_IMAGES = 5
+
+type DraftImage = { id: string; blob: Blob; previewUrl: string; name: string }
 
 function ProductModal({ t, language, defaultProfile, businessType, currency, stockLocked, uploadEnabled, initialProduct, existingProducts, onClose, onSave }: {
   t: Texts
@@ -1931,18 +1904,24 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
   initialProduct?: Product
   existingProducts: Product[]
   onClose: () => void
-  onSave: (product: Product, imageFiles: File[]) => void | Promise<void>
+  onSave: (product: Product, imageBlobs: Blob[]) => void | Promise<void>
 }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [images, setImages] = useState<DraftImage[]>([])
+  const [optimizing, setOptimizing] = useState(false)
+  const previewUrls = useRef<string[]>([])
   const [form, setForm] = useState(() => ({
     name: initialProduct?.name ?? '',
     sku: initialProduct?.sku ?? '',
     category: initialProduct?.category ?? '',
     quantity: String(initialProduct?.quantity ?? 0),
     minStock: String(initialProduct?.minStock ?? 3),
-    unit: initialProduct?.unit ?? defaultUnit(businessType),
+    unit: initialProduct?.unit ?? productFormProfile(
+      businessType,
+      language,
+      productKindForCategory(initialProduct?.category ?? '', businessType),
+    ).unit.options[0],
     cost: initialProduct?.cost ? String(initialProduct.cost) : '',
     price: initialProduct?.price ? String(initialProduct.price) : '',
     variant: initialProduct?.variant ?? '',
@@ -1952,16 +1931,67 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
   const currencyLabel = currency === 'NIO' ? 'C$' : currency
   const productProfile = initialProduct?.profile ?? defaultProfile
   const productKind = productKindForCategory(form.category, businessType)
-  const variantCopy = variantFieldCopy(productKind, language)
-  const unitChoices = [...new Set([form.unit, ...unitsForProductKind(productKind)])]
+  const profile = productFormProfile(businessType, language, productKind)
+  const unitChoices = [...new Set([form.unit, ...profile.unit.options])]
   const updateCategory = (category: string) => {
-    const choices = unitsForProductKind(productKindForCategory(category, businessType))
+    const choices = productFormProfile(
+      businessType,
+      language,
+      productKindForCategory(category, businessType),
+    ).unit.options
     setForm((current) => ({
       ...current,
       category,
       unit: choices.includes(current.unit) ? current.unit : choices[0],
     }))
   }
+
+  useEffect(() => () => {
+    previewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+  }, [])
+
+  async function addFiles(files: File[]) {
+    if (files.length === 0) return
+    const room = MAX_PRODUCT_IMAGES - images.length
+    if (room <= 0) {
+      setError(t.imageLimit)
+      return
+    }
+    setError(files.length > room ? t.imageLimit : '')
+    setOptimizing(true)
+    const added: DraftImage[] = []
+    const failures: string[] = []
+    for (const file of files.slice(0, room)) {
+      if (!file.type.startsWith('image/')) {
+        failures.push(t.imageLoadError)
+        continue
+      }
+      try {
+        const blob = await compressImage(file)
+        const previewUrl = URL.createObjectURL(blob)
+        previewUrls.current.push(previewUrl)
+        added.push({ id: crypto.randomUUID(), blob, previewUrl, name: file.name })
+      } catch (optimizeError) {
+        failures.push(optimizeError instanceof Error ? optimizeError.message : t.imageLoadError)
+      }
+    }
+    setImages((current) => [...current, ...added].slice(0, MAX_PRODUCT_IMAGES))
+    setOptimizing(false)
+    if (failures.length > 0) setError([...new Set(failures)].join(' '))
+  }
+
+  function removeImage(id: string) {
+    setImages((current) => {
+      const target = current.find((image) => image.id === id)
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl)
+        previewUrls.current = previewUrls.current.filter((url) => url !== target.previewUrl)
+      }
+      return current.filter((image) => image.id !== id)
+    })
+    setError('')
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
@@ -1973,7 +2003,7 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
     const numeric = (value: string) => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0
     setBusy(true)
     try {
-      await onSave({ id: initialProduct?.id ?? crypto.randomUUID(), name: form.name.trim(), sku: form.sku.trim(), category: form.category.trim() || 'General', profile: productProfile, quantity: numeric(form.quantity), minStock: numeric(form.minStock), unit: form.unit, cost: numeric(form.cost), price: numeric(form.price), variant: form.variant.trim() || undefined, serial: form.serial.trim() || undefined }, imageFiles)
+      await onSave({ id: initialProduct?.id ?? crypto.randomUUID(), name: form.name.trim(), sku: form.sku.trim(), category: form.category.trim() || 'General', profile: productProfile, quantity: numeric(form.quantity), minStock: numeric(form.minStock), unit: form.unit, cost: numeric(form.cost), price: numeric(form.price), variant: form.variant.trim() || undefined, serial: form.serial.trim() || undefined }, images.map((image) => image.blob))
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : t.storageError)
     } finally {
@@ -1985,20 +2015,35 @@ function ProductModal({ t, language, defaultProfile, businessType, currency, sto
       <div className="modal-heading"><div><span className="modal-icon"><Package size={19} /></span><div><h2 id="modal-title">{initialProduct ? t.editProduct : t.newProductTitle}</h2><p>{t.newProductSub}</p></div></div><button className="icon-button" onClick={onClose} aria-label={t.cancel}><X size={19} /></button></div>
       <form onSubmit={submit}>
         <div className="form-grid">
-          <label className="field span-two"><span>{t.name} *</span><input autoFocus value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={language === 'es' ? 'Ej. Camisa deportiva' : 'e.g. Sports shirt'} /></label>
-          <label className="field"><span>{t.sku} *</span><input value={form.sku} onChange={(event) => update('sku', event.target.value)} placeholder="CAM-NEG-M" /></label>
-          <label className="field"><span>{t.category}</span><input list="product-categories" value={form.category} onChange={(event) => updateCategory(event.target.value)} placeholder={categoryPlaceholder(businessType, language)} /><datalist id="product-categories">{categorySuggestions(businessType, language).map((category) => <option value={category} key={category} />)}</datalist></label>
-          <label className="field"><span>{t.unit}</span><select value={form.unit} onChange={(event) => update('unit', event.target.value)}>{unitChoices.map((unit) => <option value={unit} key={unit}>{unitText(unit, t)}</option>)}</select></label>
-          <label className="field"><span>{t.quantity}</span><input type="number" min="0" step="0.01" value={form.quantity} disabled={stockLocked} onChange={(event) => update('quantity', event.target.value)} />{stockLocked && <small>{t.adjustStockSeparately}</small>}</label>
-          <label className="field"><span>{t.minStock}</span><input type="number" min="0" step="0.01" value={form.minStock} onChange={(event) => update('minStock', event.target.value)} /></label>
-          <label className="field"><span>{t.cost} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.cost} onChange={(event) => update('cost', event.target.value)} placeholder="0.00" /></label>
-          <label className="field"><span>{t.price} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', event.target.value)} placeholder="0.00" /></label>
-          <label className="field"><span>{variantCopy.label}</span><input value={form.variant} onChange={(event) => update('variant', event.target.value)} placeholder={variantCopy.placeholder} /></label>
-          {(productKind === 'electronics' || productKind === 'auto_parts' || Boolean(form.serial)) && <label className="field"><span>{t.serial}</span><input value={form.serial} onChange={(event) => update('serial', event.target.value)} placeholder={language === 'es' ? 'Ej. IMEI / número de serie' : 'e.g. IMEI / serial number'} /></label>}
+          <label className="field span-two"><span>{profile.name.label} *</span><input autoFocus value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={profile.name.placeholder} /></label>
+          <label className="field"><span>{profile.sku.label} *</span><input value={form.sku} onChange={(event) => update('sku', event.target.value)} placeholder={profile.sku.placeholder} /></label>
+          <label className="field"><span>{profile.category.label}</span><input list="product-categories" value={form.category} onChange={(event) => updateCategory(event.target.value)} placeholder={profile.category.placeholder} /><datalist id="product-categories">{profile.category.suggestions.map((category) => <option value={category} key={category} />)}</datalist></label>
+          <label className="field"><span>{profile.unit.label}</span><select value={form.unit} onChange={(event) => update('unit', event.target.value)}>{unitChoices.map((unit) => <option value={unit} key={unit}>{unitText(unit, t)}</option>)}</select></label>
+          <label className="field"><span>{profile.quantity.label}</span><input type="number" min="0" step="0.01" value={form.quantity} placeholder={profile.quantity.placeholder} disabled={stockLocked} onChange={(event) => update('quantity', event.target.value)} />{stockLocked && <small>{t.adjustStockSeparately}</small>}</label>
+          <label className="field"><span>{profile.minStock.label}</span><input type="number" min="0" step="0.01" value={form.minStock} placeholder={profile.minStock.placeholder} onChange={(event) => update('minStock', event.target.value)} /></label>
+          <label className="field"><span>{profile.cost.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.cost} onChange={(event) => update('cost', event.target.value)} placeholder={profile.cost.placeholder} /></label>
+          <label className="field"><span>{profile.price.label} ({currencyLabel})</span><input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update('price', event.target.value)} placeholder={profile.price.placeholder} /></label>
+          <label className="field"><span>{profile.variant.label}</span><input value={form.variant} onChange={(event) => update('variant', event.target.value)} placeholder={profile.variant.placeholder} /></label>
+          {profile.serial && <label className="field"><span>{profile.serial.label}</span><input value={form.serial} onChange={(event) => update('serial', event.target.value)} placeholder={profile.serial.placeholder} /></label>}
         </div>
-        {uploadEnabled && !initialProduct && <label className="field image-file-field"><span>{t.addImages} ({t.imageCount})</span><input type="file" accept="image/*" multiple disabled={busy} onChange={(event) => { const selected = Array.from(event.target.files ?? []); if (selected.length > 5) { setError(t.imageLimit); event.target.value = ''; setImageFiles([]); return } setError(''); setImageFiles(selected) }} /><small>{t.imageUploadHint} {t.imageLimit} {imageFiles.length > 0 && `· ${imageFiles.length} ${t.imageCount.toLowerCase()}`}</small></label>}
+        {uploadEnabled && !initialProduct && <div className="field image-picker">
+          <div className="image-picker-head"><span>{t.addImages}</span><small>{images.length}/{MAX_PRODUCT_IMAGES}</small></div>
+          <div className="image-preview-grid">
+            {images.map((image, index) => <figure className="image-preview" key={image.id}>
+              <img src={image.previewUrl} alt={image.name} />
+              <span className="image-preview-index">{index + 1}</span>
+              <button type="button" className="image-preview-remove" onClick={() => removeImage(image.id)} aria-label={`${t.deleteImage}: ${image.name}`} disabled={busy || optimizing}><X size={13} /></button>
+            </figure>)}
+            {images.length < MAX_PRODUCT_IMAGES && <label className={`image-preview-add${optimizing ? ' is-busy' : ''}`}>
+              <ImagePlus size={18} />
+              <span>{optimizing ? t.optimizingImages : t.addImages}</span>
+              <input type="file" accept="image/*" multiple disabled={busy || optimizing} onChange={(event) => { const selected = Array.from(event.target.files ?? []); event.target.value = ''; void addFiles(selected) }} />
+            </label>}
+          </div>
+          <small className="image-picker-hint">{t.imageUploadHint}</small>
+        </div>}
         {error && <p className="form-error" role="alert">{error}</p>}
-        <div className="modal-actions"><button type="button" className="outline-button" onClick={onClose} disabled={busy}>{t.cancel}</button><button type="submit" className="primary-button" disabled={busy}>{initialProduct ? <Pencil size={15} /> : <Plus size={17} />}{busy ? t.loading : initialProduct ? t.updateProduct : t.save}</button></div>
+        <div className="modal-actions"><button type="button" className="outline-button" onClick={onClose} disabled={busy}>{t.cancel}</button><button type="submit" className="primary-button" disabled={busy || optimizing}>{initialProduct ? <Pencil size={15} /> : <Plus size={17} />}{busy ? t.loading : initialProduct ? t.updateProduct : t.save}</button></div>
       </form>
     </section>
   </div>
@@ -2053,7 +2098,7 @@ function ImageManagerModal({ t, language, product, images, loading, initialError
   return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose() }}>
     <section className="image-modal" role="dialog" aria-modal="true" aria-labelledby="image-modal-title">
       <div className="modal-heading"><div><span className="modal-icon"><ImagePlus size={19} /></span><div><h2 id="image-modal-title">{t.manageImages}</h2><p>{product.name}</p></div></div><button className="icon-button" onClick={onClose} aria-label={t.close} disabled={busy}><X size={19} /></button></div>
-      <p className="image-hint">{t.imageUploadHint} {t.imageLimit}</p>
+      <p className="image-hint">{t.imageUploadHint}</p>
       <label className="image-drop-zone"><ImagePlus size={20} /><span>{busy ? t.loading : t.addImages}</span><input type="file" accept="image/*" multiple disabled={busy || images.length >= 5} onChange={(event) => { const selected = Array.from(event.target.files ?? []); event.target.value = ''; void addFiles(selected) }} /></label>
       {(initialError || error) && <p className="form-error" role="alert">{error || initialError}</p>}
       {loading ? <p className="image-loading">{t.loading}</p> : <div className="image-manager-grid">{images.map((image) => <article className="managed-image" key={image.id}><img src={image.url} alt={`${product.name} · ${image.position + 1}`} /><div className="managed-image-details"><span>{image.width} × {image.height} px · {(image.sizeBytes / 1024).toFixed(1)} KiB</span><button className="row-action image-delete-button" aria-label={`${t.deleteImage}: ${product.name}`} disabled={busy} onClick={() => void deleteImage(image)}><Trash2 size={15} /></button></div></article>)}{images.length === 0 && !initialError && <p className="image-loading">{t.noImages}</p>}</div>}

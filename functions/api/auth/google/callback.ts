@@ -9,7 +9,7 @@ import {
   readOAuthState,
   redirectTo,
 } from '../../../_lib/google'
-import { randomToken, secureCookie, sha256 } from '../../../_lib/http'
+import { randomToken, sessionCookie, sha256 } from '../../../_lib/http'
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
 
@@ -72,7 +72,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString()
   const sessionToken = randomToken()
   const tokenHash = await sha256(sessionToken)
-  const sessionCookie = secureCookie(sessionToken, SESSION_TTL_SECONDS)
+  const sessionCookieHeader = sessionCookie(sessionToken, SESSION_TTL_SECONDS, isHttpsRequest(request))
 
   const linked = await env.DB.prepare(
     'SELECT user_id FROM oauth_accounts WHERE provider = ?1 AND provider_uid = ?2 LIMIT 1',
@@ -101,7 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       .bind(tokenHash, linked.user_id, membership.tenant_id, expiresAt, now)
       .run()
 
-    return redirectTo(`${origin}/`, [sessionCookie, clearCookie])
+    return redirectTo(`${origin}/`, [sessionCookieHeader, clearCookie])
   }
 
   // Si el correo ya existe con contraseña, se vincula la identidad de Google a
@@ -142,7 +142,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       return fail('vinculacion_fallida')
     }
 
-    return redirectTo(`${origin}/`, [sessionCookie, clearCookie])
+    return redirectTo(`${origin}/`, [sessionCookieHeader, clearCookie])
   }
 
   const userId = crypto.randomUUID()
@@ -191,5 +191,5 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     return fail('alta_fallida')
   }
 
-  return redirectTo(`${origin}/`, [sessionCookie, clearCookie])
+  return redirectTo(`${origin}/`, [sessionCookieHeader, clearCookie])
 }

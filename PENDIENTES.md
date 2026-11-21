@@ -1,10 +1,37 @@
 # Pendientes — Noubora Catalog
 
-> Última actualización: 20 de noviembre de 2026, 15:55 (America/Managua).
-> Estado: los cambios de Google OAuth y de registro sin verificación ya están
-> desplegados, probados y confirmados en git. Este archivo resume lo que falta
-> o conviene decidir más tarde. Para el estado técnico completo, consulta
-> [HANDOFF.md](./HANDOFF.md).
+> Última actualización: 20 de noviembre de 2026, 19:35 (America/Managua).
+> Estado: los cambios de Google OAuth y de registro sin verificación están
+> desplegados y confirmados en git. En esta sesión se trabajó el formulario de
+> producto por giro, las imágenes con vista previa y la sesión en local. Para el
+> estado técnico completo, consulta [HANDOFF.md](./HANDOFF.md).
+
+---
+
+## 0. Trabajo de esta sesión (sin commit todavía)
+
+- **Formulario de producto por tipo de negocio.** `shared/product-form-profile.ts`
+  define etiquetas, placeholders, categorías sugeridas, unidades y campos
+  visibles para los ocho giros (`clothing`, `hardware`, `food`, `liquor`,
+  `electronics`, `auto_parts`, `general`, `personal`). El modal de
+  [App.tsx](./src/App.tsx) consume ese perfil: el nombre del campo, el ejemplo,
+  el selector de unidad y la variante cambian según el negocio. En la tienda
+  general, la categoría (`Bebidas`, `Ropa`…) ajusta unidades y variante.
+- **Imágenes de producto.** Al seleccionar una foto se optimiza al instante en
+  el navegador, se muestra una vista previa numerada con botón para quitarla y
+  el contador `n/5`. Al guardar se suben ya optimizadas (sin recomprimir). El
+  texto visible solo dice “Hasta 5 imágenes por producto”; ya no menciona WebP.
+- **Paleta completa en el panel.** Las tarjetas de resumen, el donut, la
+  leyenda, los accesos rápidos, los estados y las miniaturas usan solo verde
+  (`#1db973`), magenta (`#b91db1`) y rojo (`#b9251d`) con sus tonos suaves.
+- **Sesión en desarrollo arreglada.** Sobre HTTP la cookie se emite como
+  `tellez-session` sin `Secure` (el prefijo `__Host-` exige HTTPS y el navegador
+  la descartaba). En HTTPS de producción se mantiene `__Host-tellez-session`.
+- **Cuenta de prueba local.** `npm run db:seed:dev` crea `dev@noubora.local` /
+  `noubora-dev-2026` con cuatro espacios de trabajo y productos de ejemplo; en
+  `127.0.0.1` el acceso muestra un botón para entrar con ella.
+- **Pruebas:** `npm test` pasa **13/13**; las nuevas son
+  `tests/product-form-profile.test.ts`.
 
 ---
 

@@ -51,8 +51,9 @@
 - Perfiles de negocio: ropa/calzado, ferretería, productos sólidos e inventario
   personal.
 - Movimientos de inventario con motivo y fecha (auditables).
-- Imágenes: conversión a WebP en el navegador, máximo **5 por producto** y
-  **150 KiB** por archivo, guardadas en R2 privado.
+- Imágenes: se optimizan en el navegador antes de subirse (máximo **5 por
+  producto**, **150 KiB** por archivo tras la conversión a WebP) y se guardan en
+  R2 privado. El usuario solo ve el límite de 5 y una vista previa de cada foto.
 - Catálogo público por negocio en `/catalogo/{slug}`, que solo muestra productos
   con existencia.
 - Interfaz bilingüe ES/EN.
@@ -171,11 +172,26 @@ npm install
 npm run dev          # interfaz con datos demo en http://localhost:5173
 npm run dev:stack    # app real con D1 y R2 simulados en http://localhost:8788
 npm run dev:stack:lan  # además expuesta a la red local
+npm run db:seed:dev  # cuenta de prueba con cuatro espacios de trabajo
 ```
 
 `dev:stack` aplica las migraciones locales (`wrangler d1 migrations apply
 nouboracatalog --local`) y luego compila y sirve. Los datos locales viven en
 `.wrangler/` y **no** se sincronizan con Cloudflare.
+
+`db:seed:dev` crea (o recrea) la cuenta de prueba `dev@noubora.local` con la
+contraseña `noubora-dev-2026` y cuatro espacios de trabajo —ropa, ferretería,
+alimentos y tienda general— con productos de ejemplo. En `127.0.0.1` la
+pantalla de acceso muestra un botón para entrar con esa cuenta. Solo existe en
+la base local: en producción ese correo no está registrado.
+
+### Sesión en desarrollo
+
+La cookie de sesión se emite como `__Host-tellez-session` con `Secure` cuando la
+petición llega por HTTPS (producción). Sobre HTTP —`localhost` o la IP de la red
+local— se emite como `tellez-session` sin `Secure`, porque el prefijo `__Host-`
+exige HTTPS y el navegador descartaría la cookie. El backend lee ambos nombres,
+así que las sesiones abiertas siguen siendo válidas.
 
 También existe `iniciar-servidor.bat`: menú con opción 1 (solo local) y 2 (local
 + red). Detecta la IP de la máquina y muestra las dos URLs.

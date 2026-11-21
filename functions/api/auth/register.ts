@@ -1,5 +1,5 @@
 import { hashPassword } from '../../_lib/auth'
-import { json, isSameOrigin, randomToken, readJsonObject, secureCookie, sha256 } from '../../_lib/http'
+import { json, isHttpsRequest, isSameOrigin, randomToken, readJsonObject, sessionCookie, sha256 } from '../../_lib/http'
 import { CURRENT_TERMS_VERSION } from '../../../shared/terms'
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -71,5 +71,5 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     user: { id: userId, email, emailVerified: true },
     tenant: { id: tenantId, name: 'Cuenta nueva', slug, profile: 'solid_goods', businessType: 'general', currency: 'NIO', setupCompleted: false },
     verification: { required: false },
-  }, 201, { 'Set-Cookie': secureCookie(sessionToken, SESSION_TTL_SECONDS) })
+  }, 201, { 'Set-Cookie': sessionCookie(sessionToken, SESSION_TTL_SECONDS, isHttpsRequest(request)) })
 }

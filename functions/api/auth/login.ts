@@ -1,5 +1,5 @@
 import { consumeDummyPasswordHash, verifyPassword } from '../../_lib/auth'
-import { json, isSameOrigin, randomToken, readJsonObject, secureCookie, sha256 } from '../../_lib/http'
+import { json, isHttpsRequest, isSameOrigin, randomToken, readJsonObject, sessionCookie, sha256 } from '../../_lib/http'
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
 const MAX_ATTEMPTS = 8
@@ -76,6 +76,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   ])
 
   return json({ user: { id: user.id, email: user.email }, tenantId }, 200, {
-    'Set-Cookie': secureCookie(sessionToken, SESSION_TTL_SECONDS),
+    'Set-Cookie': sessionCookie(sessionToken, SESSION_TTL_SECONDS, isHttpsRequest(request)),
   })
 }

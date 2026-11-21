@@ -55,9 +55,21 @@ npm run dev:stack:lan
 También existe `iniciar-servidor.bat`: doble clic y elige solo local (1) o
 local + red (2). Detecta la IP de la máquina y muestra las dos URLs.
 
-> Sobre HTTP en la red local la cookie de sesión es `Secure` y el navegador la
-> descarta, así que el catálogo se ve pero no se puede iniciar sesión desde otro
-> dispositivo. Para eso hay que servir HTTPS con `--local-protocol https`.
+Para probar el panel con datos reales sin usar tu cuenta, crea la cuenta de
+prueba local (existe solo en `.wrangler/`, nunca en producción):
+
+```powershell
+npm run db:seed:dev
+```
+
+Crea `dev@noubora.local` / `noubora-dev-2026` con cuatro espacios de trabajo
+(ropa, ferretería, alimentos y tienda general) y productos de ejemplo. En
+`http://127.0.0.1:8788/ingresar` aparece un botón para entrar con esa cuenta.
+
+> La cookie de sesión usa el prefijo `__Host-` y `Secure` cuando se sirve por
+> HTTPS (producción). En desarrollo por HTTP se emite como `tellez-session` sin
+> `Secure`, para que el navegador sí la guarde tanto en `localhost` como en la
+> IP de la red local.
 
 ## Comprobar cambios
 

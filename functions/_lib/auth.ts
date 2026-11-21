@@ -1,7 +1,6 @@
-import { getCookie, fromHex, json, sha256, toHex } from './http'
+import { getCookie, fromHex, json, sha256, toHex, HOST_SESSION_COOKIE, LOCAL_SESSION_COOKIE, isHttpsRequest } from './http'
 import type { BusinessType } from '../../shared/business-types'
 
-const SESSION_COOKIE = '__Host-tellez-session'
 // Workers limita PBKDF2 a 100.000 iteraciones (NotSupportedError por encima).
 const PASSWORD_ITERATIONS = 100_000
 const DUMMY_SALT = '8e94c02a5173f14109891a2d9f36ccab'
@@ -31,8 +30,16 @@ export type PasswordRecord = {
   iterations: number
 }
 
-export function getSessionCookieName(): string {
-  return SESSION_COOKIE
+export function readSessionToken(request: Request): string | null {
+  // Sobre HTTPS solo vale la cookie `__Host-`: así ninguna cookie sin prefijo
+  // puede suplantar la sesión en producción. En desarrollo por HTTP se aceptan
+  // ambos nombres porque el prefijo `__Host-` exige `Secure`.
+  const names = isHttpsRequest(request) ? [HOST_SESSION_COOKIE] : [LOCAL_SESSION_COOKIE, HOST_SESSION_COOKIE]
+  for (const name of names) {
+    const token = getCookie(request, name)
+    if (token) return token
+  }
+  return null
 }
 
 export async function hashPassword(password: string): Promise<PasswordRecord> {
@@ -72,7 +79,7 @@ async function derivePassword(password: string, salt: Uint8Array, iterations: nu
 }
 
 export async function getAuthenticatedSession(request: Request, db: D1Database): Promise<AuthenticatedSession | null> {
-  const token = getCookie(request, SESSION_COOKIE)
+  const token = readSessionToken(request)
   if (!token || !/^[A-Za-z0-9_-]{40,50}$/u.test(token)) return null
 
   const tokenHash = await sha256(token)

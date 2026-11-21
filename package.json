@@ -10,6 +10,7 @@
     "dev:stack": "npm run db:migrate:local && npm run dev:pages",
     "dev:stack:lan": "npm run db:migrate:local && npm run dev:lan",
     "db:migrate:local": "wrangler d1 migrations apply nouboracatalog --local --config wrangler.jsonc",
+    "db:seed:dev": "node scripts/seed-local-dev.mjs",
     "infra:plan": "node scripts/provision-cloudflare.mjs",
     "infra:provision": "node scripts/provision-cloudflare.mjs --apply",
     "infra:check": "node scripts/provision-cloudflare.mjs --check",

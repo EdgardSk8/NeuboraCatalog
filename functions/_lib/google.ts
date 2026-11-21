@@ -1,4 +1,6 @@
-import { getCookie } from './http'
+import { getCookie, isHttpsRequest } from './http'
+
+export { isHttpsRequest }
 
 export const OAUTH_COOKIE = 'tellez_oauth'
 export const OAUTH_COOKIE_PATH = '/api/auth/google'
@@ -35,10 +37,6 @@ export function randomUrlToken(byteLength = 32): string {
 export async function codeChallenge(verifier: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
   return base64Url(new Uint8Array(digest))
-}
-
-export function isHttpsRequest(request: Request): boolean {
-  return new URL(request.url).protocol === 'https:'
 }
 
 export function oauthCookieHeader(value: string, maxAge: number, secure: boolean): string {

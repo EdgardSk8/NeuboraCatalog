@@ -666,6 +666,8 @@ td { height: 44px; padding: 0 10px; }
 .image-preview-add input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
 .image-preview-add:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; }
 .image-picker-hint { color: #89968e; font-size: var(--admin-text-2xs); line-height: 1.4; }
+.settings-location { padding: 10px 12px; border: 1px dashed #dcf5e9; border-radius: var(--admin-radius-compact); background: #f8fdfb; }
+.settings-location-title { margin: 0; color: var(--brand-deep); font-size: var(--admin-text-xs-plus); font-weight: 700; }
 .dev-login { margin-top: 10px; padding: 8px 10px; border: 1px dashed #b2e2cc; border-radius: 10px; background: #f8fdfb; color: #627168; font-size: var(--admin-text-2xs); line-height: 1.4; }
 .dev-login p { margin: 0 0 4px; }
 .dev-login-credentials { margin-bottom: 8px !important; color: #106a40; font-family: ui-monospace, Consolas, monospace; }

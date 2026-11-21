@@ -19,6 +19,7 @@ export type AuthenticatedSession = {
   address: string | null
   trialStartedAt: string | null
   planTier: string
+  fulfillmentMode: string
   role: string
   email: string
   emailVerified: number
@@ -98,6 +99,7 @@ export async function getAuthenticatedSession(request: Request, db: D1Database):
            tenants.currency, tenants.setup_completed AS setupCompleted,
            tenants.country AS countryCode, tenants.city, tenants.physical_address AS address,
            tenants.trial_started_at AS trialStartedAt, tenants.plan_tier AS planTier,
+           tenants.fulfillment_mode AS fulfillmentMode,
            tenant_memberships.role
     FROM sessions
     JOIN users ON users.id = sessions.user_id

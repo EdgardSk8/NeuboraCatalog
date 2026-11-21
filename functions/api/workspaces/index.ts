@@ -14,7 +14,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
              WHEN 'personal' THEN 'personal'
              ELSE 'general'
            END) AS businessType,
-           tenants.currency, tenants.setup_completed AS setupCompleted, tenant_memberships.role
+           tenants.currency, tenants.setup_completed AS setupCompleted, tenant_memberships.role,
+           tenants.fulfillment_mode AS fulfillmentMode
     FROM tenant_memberships
     JOIN tenants ON tenants.id = tenant_memberships.tenant_id
     WHERE tenant_memberships.user_id = ?1
@@ -28,6 +29,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     currency: string
     setupCompleted: number
     role: string
+    fulfillmentMode: string
   }>()
 
   return json({ items: result.results })

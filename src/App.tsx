@@ -38,6 +38,7 @@ import { BUSINESS_TYPES, businessGroupForType, isBusinessType, isSelectableBusin
 import { COUNTRIES, isCountryCode, type CountryCode } from '../shared/locations'
 import { productKindForCategory } from '../shared/product-categories'
 import { productFormProfile } from '../shared/product-form-profile'
+import { FULFILLMENT_MODES, fulfillmentNeedsLocation, isFulfillmentMode, type FulfillmentMode } from '../shared/fulfillment'
 import { TermsPage } from './TermsPage'
 import { LandingPage } from './LandingPage'
 import './App.css'
@@ -86,7 +87,7 @@ type StockMovement = {
 
 type AuthSession = {
   user: { id: string; email: string; emailVerified: boolean }
-  tenant: { id: string; name: string; slug: string; profile: string; businessType: BusinessType; currency: string; role: string; setupCompleted: boolean; countryCode: CountryCode | null; city: string | null; address: string | null; trialStartedAt: string | null; planTier: string }
+  tenant: { id: string; name: string; slug: string; profile: string; businessType: BusinessType; currency: string; role: string; setupCompleted: boolean; countryCode: CountryCode | null; city: string | null; address: string | null; trialStartedAt: string | null; planTier: string; fulfillmentMode: FulfillmentMode }
 }
 
 type WorkspaceItem = AuthSession['tenant']
@@ -118,7 +119,10 @@ const copy = {
     saveSettings: 'Guardar configuración', settingsSaved: 'Configuración guardada correctamente.',
     ownerOnlySettings: 'Solo el propietario de la cuenta puede cambiar esta configuración.',
     setupTitle: 'Preparemos tu espacio de trabajo', setupIntro: 'Unos datos iniciales nos ayudan a adaptar el inventario. Puedes cambiar estos ajustes más adelante.', setupNameHelp: 'Este nombre identificará tu negocio en la aplicación y en tu catálogo público.',
-    location: 'Ubicación (opcional)', locationHelp: 'Estos datos ayudan a identificar dónde opera tu negocio. Puedes completarlos o dejarlos para después.', country: 'País', chooseCountry: 'Selecciona un país', city: 'Ciudad', chooseCity: 'Selecciona una ciudad', address: 'Dirección física', addressPlaceholder: 'Barrio, calle y señas', useGps: 'Usar mi ubicación GPS', gpsLoading: 'Obteniendo ubicación…', gpsDenied: 'No se pudo obtener tu ubicación. Revisa el permiso del navegador.', gpsNoKey: 'Agrega VITE_GOOGLE_MAPS_API_KEY para completar la dirección con Google Maps.', continueDashboard: 'Guardar y entrar al panel', skipLocation: 'Omitir ubicación',
+    location: 'Ubicación del negocio', locationHelp: 'Se usa para mostrar dónde entregas o dónde pueden recoger tus clientes.', country: 'País', chooseCountry: 'Selecciona un país', city: 'Ciudad', chooseCity: 'Selecciona una ciudad', address: 'Dirección física', addressPlaceholder: 'Barrio, calle y señas', continueDashboard: 'Guardar y entrar al panel',
+    setupLocationLater: 'El país, la ciudad y la dirección se piden en Configurar cuenta, cuando elijas cómo entregas tus productos.',
+    fulfillment: 'Entrega', fulfillmentHelp: 'Elige cómo entrega el negocio sus productos. La ubicación solo se pide cuando hay un punto de entrega o retiro.',
+    fulfillmentNone: 'Solo catálogo (sin entrega)', fulfillmentStore: 'Tienda física', fulfillmentDelivery: 'Delivery a domicilio', fulfillmentPickup: 'Retiro en tienda', fulfillmentShipping: 'Envío a domicilio', fulfillmentLocation: 'Datos del punto de entrega',
     phone: 'Número de teléfono', phoneCountry: 'País del número', phoneNumber: 'Número', phoneHelp: 'Elige el país del número para agregar el prefijo correcto.', freeTrial: 'Prueba gratis · 7 días', paidPlan: 'Luego $5/mes · hasta 10 productos durante la prueba', trialEnded: 'Prueba terminada · plan de $5/mes', upgradeUnavailable: 'Los pagos aún no están habilitados. Contacta con soporte para activar el plan.',
     authSubtitle: 'Inventario y operaciones en un solo lugar.', noAccount: '¿Aún no tienes cuenta?', haveAccount: '¿Ya tienes cuenta?',
     createAccount: 'Regístrate', backToSignIn: 'Inicia sesión', passwordHint: 'Mínimo 12 caracteres.',
@@ -213,7 +217,10 @@ const copy = {
     saveSettings: 'Save settings', settingsSaved: 'Settings saved successfully.',
     ownerOnlySettings: 'Only the account owner can change these settings.',
     setupTitle: 'Let’s set up your workspace', setupIntro: 'A few details help us tailor inventory to your business. You can change these settings later.', setupNameHelp: 'This name identifies your business in the app and public catalog.',
-    location: 'Location (optional)', locationHelp: 'These details help identify where your business operates. Fill them in now or later.', country: 'Country', chooseCountry: 'Choose a country', city: 'City', chooseCity: 'Choose a city', address: 'Physical address', addressPlaceholder: 'Neighborhood, street, and directions', useGps: 'Use my GPS location', gpsLoading: 'Getting location…', gpsDenied: 'Could not get your location. Check your browser permission.', gpsNoKey: 'Add VITE_GOOGLE_MAPS_API_KEY to complete the address with Google Maps.', continueDashboard: 'Save and open dashboard', skipLocation: 'Skip location',
+    location: 'Business location', locationHelp: 'Shown to customers so they know where you deliver or where they can pick up.', country: 'Country', chooseCountry: 'Choose a country', city: 'City', chooseCity: 'Choose a city', address: 'Physical address', addressPlaceholder: 'Neighborhood, street, and directions', continueDashboard: 'Save and open dashboard',
+    setupLocationLater: 'Country, city and address are requested in Configure account once you choose how you deliver your products.',
+    fulfillment: 'Fulfilment', fulfillmentHelp: 'Choose how the business delivers its products. The location is only requested when there is a delivery or pickup point.',
+    fulfillmentNone: 'Catalog only (no delivery)', fulfillmentStore: 'Physical store', fulfillmentDelivery: 'Home delivery', fulfillmentPickup: 'Store pickup', fulfillmentShipping: 'Shipping', fulfillmentLocation: 'Delivery point details',
     phone: 'Phone number', phoneCountry: 'Phone country', phoneNumber: 'Number', phoneHelp: 'Choose the country for this number to add the correct calling code.', freeTrial: 'Free trial · 7 days', paidPlan: 'Then $5/month · up to 10 products during trial', trialEnded: 'Trial ended · $5/month plan', upgradeUnavailable: 'Payments are not enabled yet. Contact support to activate the plan.',
     authSubtitle: 'Inventory and operations in one place.', noAccount: "Don't have an account?", haveAccount: 'Already have an account?',
     createAccount: 'Sign up', backToSignIn: 'Sign in', passwordHint: 'At least 12 characters.',
@@ -326,6 +333,22 @@ function businessTypeText(businessType: BusinessType, language: Language): strin
     personal: { es: 'Inventario personal', en: 'Personal inventory' },
   }
   return labels[businessType][language]
+}
+
+function fulfillmentText(mode: FulfillmentMode, t: Texts): string {
+  switch (mode) {
+    case 'store': return t.fulfillmentStore
+    case 'delivery': return t.fulfillmentDelivery
+    case 'pickup': return t.fulfillmentPickup
+    case 'shipping': return t.fulfillmentShipping
+    default: return t.fulfillmentNone
+  }
+}
+
+function countryText(item: typeof COUNTRIES[number], language: Language): string {
+  if (language === 'es') return item.name
+  const english: Record<string, string> = { NI: 'Nicaragua', CR: 'Costa Rica', HN: 'Honduras', SV: 'El Salvador', GT: 'Guatemala', US: 'United States', CA: 'Canada', MX: 'Mexico', OTHER: 'Other' }
+  return english[item.code] ?? item.name
 }
 
 function dashboardContext(businessType: BusinessType, language: Language): string {
@@ -472,7 +495,8 @@ async function loadApiWorkspace(): Promise<{ session: AuthSession; products: Pro
     || typeof tenant.currency !== 'string' || typeof tenant.role !== 'string' || typeof tenant.setupCompleted !== 'boolean'
     || !(tenant.countryCode === null || isCountryCode(tenant.countryCode))
     || !(tenant.city === null || typeof tenant.city === 'string') || !(tenant.address === null || typeof tenant.address === 'string')
-    || !(tenant.trialStartedAt === null || typeof tenant.trialStartedAt === 'string') || typeof tenant.planTier !== 'string') {
+    || !(tenant.trialStartedAt === null || typeof tenant.trialStartedAt === 'string') || typeof tenant.planTier !== 'string'
+    || !isFulfillmentMode(tenant.fulfillmentMode)) {
     throw new Error('La sesión recibida no contiene datos de espacio de trabajo válidos.')
   }
 
@@ -501,13 +525,13 @@ async function loadApiWorkspace(): Promise<{ session: AuthSession; products: Pro
       businessType: item.businessType,
       currency: item.currency,
       role: item.role,
-      setupCompleted: Boolean(item.setupCompleted), countryCode: null, city: null, address: null, trialStartedAt: null, planTier: 'free',
+      setupCompleted: Boolean(item.setupCompleted), countryCode: null, city: null, address: null, trialStartedAt: null, planTier: 'free', fulfillmentMode: isFulfillmentMode(item.fulfillmentMode) ? item.fulfillmentMode : 'none',
     }
   })
   return {
     session: {
       user: { id: user.id, email: user.email, emailVerified: user.emailVerified },
-      tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, profile: tenant.profile, businessType: tenant.businessType, currency: tenant.currency, role: tenant.role, setupCompleted: tenant.setupCompleted, countryCode: tenant.countryCode, city: tenant.city, address: tenant.address, trialStartedAt: tenant.trialStartedAt, planTier: tenant.planTier },
+      tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, profile: tenant.profile, businessType: tenant.businessType, currency: tenant.currency, role: tenant.role, setupCompleted: tenant.setupCompleted, countryCode: tenant.countryCode, city: tenant.city, address: tenant.address, trialStartedAt: tenant.trialStartedAt, planTier: tenant.planTier, fulfillmentMode: tenant.fulfillmentMode },
     },
     products: productValue.items.map(mapApiProduct),
     movements: movementValue.items.map(mapApiMovement),
@@ -835,15 +859,10 @@ function WorkspaceApp() {
   const [setupName, setSetupName] = useState('')
   const [setupBusinessType, setSetupBusinessType] = useState<BusinessType>('general')
   const [setupCurrency, setSetupCurrency] = useState('NIO')
-  const [setupCountry, setSetupCountry] = useState<CountryCode | ''>('')
-  const [setupCity, setSetupCity] = useState('')
-  const [setupAddress, setSetupAddress] = useState('')
   const [phoneCountryCode, setPhoneCountryCode] = useState<CountryCode>('NI')
   const [customPhoneDialCode, setCustomPhoneDialCode] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [setupBusy, setSetupBusy] = useState(false)
-  const [gpsBusy, setGpsBusy] = useState(false)
-  const [gpsMapUrl, setGpsMapUrl] = useState('')
   const [setupError, setSetupError] = useState('')
   const [products, setProducts] = useState<Product[]>(readProducts)
   const [productPageItems, setProductPageItems] = useState<Product[]>([])
@@ -1032,7 +1051,7 @@ function WorkspaceApp() {
     if (showsSignIn) window.history.replaceState(null, '', '/')
   }
 
-  async function completeSetup(skipLocation = false) {
+  async function completeSetup() {
     if (!session) return
     if (blockIfUnverified()) return
     setSetupError('')
@@ -1042,9 +1061,6 @@ function WorkspaceApp() {
         name: setupName,
         businessType: setupBusinessType,
         currency: setupCurrency,
-        countryCode: skipLocation ? null : setupCountry || null,
-        city: skipLocation ? null : setupCity || null,
-        address: skipLocation ? '' : setupAddress,
         phoneCountryCode,
         customPhoneDialCode,
         phoneNumber,
@@ -1059,22 +1075,14 @@ function WorkspaceApp() {
     }
   }
 
-  async function useGpsLocation() {
-    if (!navigator.geolocation) { setSetupError(t.gpsDenied); return }
-    setGpsBusy(true)
-    setSetupError('')
-    navigator.geolocation.getCurrentPosition(({ coords }) => {
-      const coordinates = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`
-      const mapUrl = `https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`
-      setGpsMapUrl(mapUrl)
-      setSetupAddress((current) => current.trim() ? `${current.trim()} (${coordinates})`.slice(0, 300) : coordinates)
-      setGpsBusy(false)
-    }, () => { setSetupError(t.gpsDenied); setGpsBusy(false) }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 })
-  }
-
-  async function saveAccountSettings(businessType: BusinessType, currency: string) {
+  async function saveAccountSettings(
+    businessType: BusinessType,
+    currency: string,
+    fulfillmentMode: FulfillmentMode,
+    location: { countryCode: CountryCode | null; city: string | null; address: string },
+  ) {
     if (blockIfUnverified()) return
-    await requestApi('/api/workspaces/settings', { businessType, currency }, 'PATCH')
+    await requestApi('/api/workspaces/settings', { businessType, currency, fulfillmentMode, ...location }, 'PATCH')
     await refreshWorkspace()
   }
 
@@ -1413,11 +1421,9 @@ function WorkspaceApp() {
       phoneCountryCode={phoneCountryCode} setPhoneCountryCode={setPhoneCountryCode} customPhoneDialCode={customPhoneDialCode} setCustomPhoneDialCode={setCustomPhoneDialCode} phoneNumber={phoneNumber} setPhoneNumber={setPhoneNumber}
       businessType={setupBusinessType} setBusinessType={setSetupBusinessType}
       currency={setupCurrency} setCurrency={setSetupCurrency}
-      country={setupCountry} setCountry={(value) => { setSetupCountry(value); setSetupCity('') }}
-      city={setupCity} setCity={setSetupCity} address={setupAddress} setAddress={setSetupAddress}
-      busy={setupBusy} gpsBusy={gpsBusy} error={setupError} gpsMapUrl={gpsMapUrl} onGps={() => { void useGpsLocation() }}
+      busy={setupBusy} error={setupError}
       onBack={() => { void returnToSignIn() }}
-      onSubmit={() => { void completeSetup(false) }} onSkip={() => { void completeSetup(true) }}
+      onSubmit={() => { void completeSetup() }}
     />
   }
 
@@ -1642,18 +1648,14 @@ function HelpHint({ text, language }: { text: string; language: Language }) {
   </span>
 }
 
-function WorkspaceSetupPage({ t, language, name, setName, phoneCountryCode, setPhoneCountryCode, customPhoneDialCode, setCustomPhoneDialCode, phoneNumber, setPhoneNumber, businessType, setBusinessType, currency, setCurrency, country, setCountry, city, setCity, address, setAddress, onBack, busy, gpsBusy, error, gpsMapUrl, onGps, onSubmit, onSkip }: {
+function WorkspaceSetupPage({ t, language, name, setName, phoneCountryCode, setPhoneCountryCode, customPhoneDialCode, setCustomPhoneDialCode, phoneNumber, setPhoneNumber, businessType, setBusinessType, currency, setCurrency, onBack, busy, error, onSubmit }: {
   t: Texts; language: Language; name: string; setName: (value: string) => void
   phoneCountryCode: CountryCode; setPhoneCountryCode: (value: CountryCode) => void; customPhoneDialCode: string; setCustomPhoneDialCode: (value: string) => void; phoneNumber: string; setPhoneNumber: (value: string) => void
   businessType: BusinessType; setBusinessType: (value: BusinessType) => void
   currency: string; setCurrency: (value: string) => void
-  country: CountryCode | ''; setCountry: (value: CountryCode | '') => void
-  city: string; setCity: (value: string) => void; address: string; setAddress: (value: string) => void
   onBack: () => void
-  busy: boolean; gpsBusy: boolean; error: string; gpsMapUrl: string; onGps: () => void; onSubmit: () => void; onSkip: () => void
+  busy: boolean; error: string; onSubmit: () => void
 }) {
-  const selectedCountry = COUNTRIES.find((item) => item.code === country)
-  const countryLabel = (item: typeof COUNTRIES[number]) => language === 'es' ? item.name : ({ NI: 'Nicaragua', CR: 'Costa Rica', HN: 'Honduras', SV: 'El Salvador', GT: 'Guatemala', US: 'United States', CA: 'Canada', MX: 'Mexico', OTHER: 'Other' }[item.code])
   return <main className="flex min-h-screen flex-col gap-2 bg-[#f6fdfa] px-[max(16px,calc((100vw-1000px)/2))] py-1.5">
     <header className="flex items-center justify-between"><a className="brand no-underline" href="/" aria-label="Noubora Catalog — inicio"><span className="brand-mark"><img src="/logo.png" alt="" /></span><span>Noubora<span className="brand-light">Catalog</span></span></a><div className="flex items-center gap-4"><button type="button" className="inline-flex items-center gap-1.5 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[11px] font-semibold text-[#567a63] transition-colors hover:bg-[#ecfaf3] hover:text-[#3d6a4c]" onClick={onBack} aria-label={language === 'es' ? 'Volver a la pantalla de inicio de sesión' : 'Back to the sign-in screen'}><ArrowLeft size={14} />{language === 'es' ? 'Volver al inicio' : 'Back to start'}</button><button className="language-toggle" onClick={() => { document.documentElement.lang = language === 'es' ? 'en' : 'es'; window.location.reload() }} aria-label="Change language">{language === 'es' ? 'ES' : 'EN'} <ChevronDown size={13} /></button></div></header>
     <section className="setup-card mx-auto w-full max-w-[1000px] rounded-[14px] border border-[#e0eee7] bg-white p-3 shadow-[0_9px_35px_#26392d08]">
@@ -1664,13 +1666,9 @@ function WorkspaceSetupPage({ t, language, name, setName, phoneCountryCode, setP
         <div className="field"><div className="flex items-center justify-between gap-1"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-business-type">{language === 'es' ? 'Tipo de negocio' : 'Business type'} *</label><HelpHint text={t.businessTypeHelp} language={language} /></div><select id="setup-business-type" value={businessType} onChange={(event) => { if (isSelectableBusinessType(event.target.value)) setBusinessType(event.target.value) }}>{BUSINESS_TYPES.map((type) => <option value={type} key={type}>{businessTypeText(type, language)}</option>)}</select></div>
         <div className="field"><div className="flex items-center justify-between gap-1"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-currency">{t.currency} *</label><HelpHint text={t.currencyHelp} language={language} /></div><select id="setup-currency" value={currency} onChange={(event) => setCurrency(event.target.value)}><option value="NIO">NIO — {language === 'es' ? 'Córdobas' : 'Nicaraguan córdobas'}</option><option value="USD">USD — {language === 'es' ? 'Dólares estadounidenses' : 'US dollars'}</option></select></div>
         <div className="field col-span-2"><div className="flex items-center justify-between"><label className="text-[12px] font-semibold text-[#627168]" htmlFor="setup-phone-country">{t.phone} *</label><HelpHint text={t.phoneHelp} language={language} /></div><div className="phone-input-row"><select id="setup-phone-country" aria-label={t.phoneCountry} value={phoneCountryCode} onChange={(event) => { if (isCountryCode(event.target.value)) setPhoneCountryCode(event.target.value) }}>{COUNTRIES.map((item) => <option key={item.code} value={item.code}>{language === 'es' ? item.name : item.code === 'MX' ? 'Mexico' : item.name} ({item.dialCode})</option>)}</select>{phoneCountryCode === 'OTHER' && <input className="phone-dial-code" aria-label={language === 'es' ? 'Prefijo internacional' : 'Calling code'} required value={customPhoneDialCode} onChange={(event) => setCustomPhoneDialCode(event.target.value)} placeholder="+XXX" maxLength={5} />}<input aria-label={t.phoneNumber} type="tel" required autoComplete="tel-national" inputMode="tel" maxLength={20} value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder={phoneCountryCode === 'NI' ? '8888 8888' : '555 123 4567'} /></div></div>
-        <div className="col-span-2 flex items-center justify-between border-t border-[#edf6f2] pt-2"><h2 className="m-0 text-[16px] font-semibold">{t.location}</h2><HelpHint text={t.locationHelp} language={language} /></div>
-        <label className="field"><span>{t.country}</span><select value={country} onChange={(event) => setCountry(isCountryCode(event.target.value) ? event.target.value : '')}><option value="">{t.chooseCountry}</option>{COUNTRIES.map((item) => <option key={item.code} value={item.code}>{countryLabel(item)}</option>)}</select></label>
-        <label className="field"><span>{t.city}</span><select value={city} disabled={!selectedCountry} onChange={(event) => setCity(event.target.value)}><option value="">{t.chooseCity}</option>{selectedCountry?.cities.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-        <label className="field col-span-2"><span>{t.address}</span><input maxLength={300} value={address} onChange={(event) => setAddress(event.target.value)} placeholder={t.addressPlaceholder} /></label>
-        <div className="col-span-2"><button className="outline-button" type="button" disabled={gpsBusy || busy} onClick={onGps}><ExternalLink size={15} />{gpsBusy ? t.gpsLoading : t.useGps}</button>{gpsMapUrl && <a className="ml-3 text-[11px] text-[#106a40]" href={gpsMapUrl} target="_blank" rel="noreferrer">{language === 'es' ? 'Ver ubicación en Google Maps' : 'View location in Google Maps'}</a>}</div>
+        <div className="col-span-2"><p className="mb-0 text-[11px] leading-relaxed text-[#87948b]">{t.setupLocationLater}</p></div>
         {error && <p className="form-error col-span-2" role="alert">{error}</p>}
-        <div className="col-span-2 flex justify-between gap-3 pt-1"><button type="button" className="outline-button" disabled={busy} onClick={onSkip}>{t.skipLocation}</button><button type="submit" className="primary-button ml-auto" disabled={busy}>{busy ? t.loading : t.continueDashboard}<ChevronRight size={17} /></button></div>
+        <div className="col-span-2 flex justify-end gap-3 pt-1"><button type="submit" className="primary-button ml-auto" disabled={busy}>{busy ? t.loading : t.continueDashboard}<ChevronRight size={17} /></button></div>
       </form>
     </section>
     <footer className="mx-auto flex w-full max-w-[700px] justify-between gap-3 text-[10px] text-[#9ba69f]"><span>© 2026 TellezSoftware</span><a className="text-[#81958a] no-underline hover:text-[#106a40] hover:underline" href={language === 'es' ? '/terminos' : '/terminos?lang=en'}>{language === 'es' ? 'Términos y condiciones' : 'Terms and Conditions'}</a></footer>
@@ -1681,14 +1679,20 @@ function AccountSettingsPage({ t, language, tenant, onSave }: {
   t: Texts
   language: Language
   tenant: WorkspaceItem
-  onSave: (businessType: BusinessType, currency: string) => Promise<void>
+  onSave: (businessType: BusinessType, currency: string, fulfillmentMode: FulfillmentMode, location: { countryCode: CountryCode | null; city: string | null; address: string }) => Promise<void>
 }) {
   const [businessType, setBusinessType] = useState<BusinessType>(businessGroupForType(tenant.businessType))
   const [currency, setCurrency] = useState(tenant.currency)
+  const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>(tenant.fulfillmentMode)
+  const [countryCode, setCountryCode] = useState<CountryCode | ''>(tenant.countryCode ?? '')
+  const [city, setCity] = useState(tenant.city ?? '')
+  const [address, setAddress] = useState(tenant.address ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const isOwner = tenant.role === 'owner'
+  const selectedCountry = COUNTRIES.find((item) => item.code === countryCode)
+  const showLocation = fulfillmentNeedsLocation(fulfillmentMode)
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1696,7 +1700,14 @@ function AccountSettingsPage({ t, language, tenant, onSave }: {
     setSaved(false)
     setBusy(true)
     try {
-      await onSave(businessType, currency)
+      await onSave(
+        businessType,
+        currency,
+        fulfillmentMode,
+        showLocation
+          ? { countryCode: countryCode || null, city: city || null, address: address.trim() }
+          : { countryCode: null, city: null, address: '' },
+      )
       setSaved(true)
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : t.authUnavailable)
@@ -1732,6 +1743,43 @@ function AccountSettingsPage({ t, language, tenant, onSave }: {
           </select>
           <small>{t.currencyHelp}</small>
         </label>
+        <label className="field span-two">
+          <span>{t.fulfillment}</span>
+          <select disabled={!isOwner || busy} value={fulfillmentMode} onChange={(event) => {
+            if (isFulfillmentMode(event.target.value)) {
+              setFulfillmentMode(event.target.value)
+              setSaved(false)
+            }
+          }}>
+            {FULFILLMENT_MODES.map((mode) => <option value={mode} key={mode}>{fulfillmentText(mode, t)}</option>)}
+          </select>
+          <small>{t.fulfillmentHelp}</small>
+        </label>
+        {showLocation && <div className="form-grid span-two settings-location">
+          <p className="span-two settings-location-title">{t.fulfillmentLocation}</p>
+          <label className="field">
+            <span>{t.country}</span>
+            <select disabled={!isOwner || busy} value={countryCode} onChange={(event) => {
+              setCountryCode(isCountryCode(event.target.value) ? event.target.value : '')
+              setCity('')
+              setSaved(false)
+            }}>
+              <option value="">{t.chooseCountry}</option>
+              {COUNTRIES.map((item) => <option key={item.code} value={item.code}>{countryText(item, language)}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span>{t.city}</span>
+            <select disabled={!isOwner || busy || !selectedCountry} value={city} onChange={(event) => { setCity(event.target.value); setSaved(false) }}>
+              <option value="">{t.chooseCity}</option>
+              {selectedCountry?.cities.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="field span-two">
+            <span>{t.address}</span>
+            <input disabled={!isOwner || busy} maxLength={300} value={address} onChange={(event) => { setAddress(event.target.value); setSaved(false) }} placeholder={t.addressPlaceholder} />
+          </label>
+        </div>}
         {!isOwner && <p className="form-error span-two" role="status">{t.ownerOnlySettings}</p>}
         {error && <p className="form-error span-two" role="alert">{error}</p>}
         {saved && <p className="span-two" role="status">{t.settingsSaved}</p>}

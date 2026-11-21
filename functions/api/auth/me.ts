@@ -19,6 +19,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       address: session.address,
       trialStartedAt: session.trialStartedAt,
       planTier: session.planTier,
+      fulfillmentMode: session.fulfillmentMode,
       role: session.role,
     },
   })

@@ -17,8 +17,8 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env }) => {
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   const businessType = body.businessType
   const currency = typeof body.currency === 'string' ? body.currency.trim().toUpperCase() : ''
-  const countryCode = body.countryCode === null || body.countryCode === '' ? null : body.countryCode
-  const city = body.city === null || body.city === '' ? null : body.city
+  const countryCode = typeof body.countryCode === 'string' && body.countryCode ? body.countryCode : null
+  const city = typeof body.city === 'string' && body.city ? body.city : null
   const address = typeof body.address === 'string' ? body.address.trim() : ''
   const phoneCountryCode = typeof body.phoneCountryCode === 'string' ? body.phoneCountryCode.trim() : ''
   const customPhoneDialCode = typeof body.customPhoneDialCode === 'string' ? body.customPhoneDialCode.trim() : ''

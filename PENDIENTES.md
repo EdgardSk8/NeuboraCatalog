@@ -47,8 +47,14 @@
   `403 email_not_verified`. Al validar el código correcto se desbloquea todo.
   En local, `DEV_SHOW_VERIFICATION_CODE=true` devuelve el código en la respuesta
   y la pantalla lo muestra para poder probar sin correo.
-- **Pruebas:** `npm test` pasa **13/13**; las nuevas son
-  `tests/product-form-profile.test.ts`.
+- **Entrega y ubicación en Configurar cuenta.** La configuración inicial ya no
+  pide país, ciudad ni dirección (ni GPS): solo nombre, giro, moneda y teléfono.
+  En **Configurar cuenta** se elige la forma de entrega —solo catálogo, tienda
+  física, delivery a domicilio, retiro en tienda o envío a domicilio— y, cuando
+  hay punto de entrega o retiro, aparecen país, ciudad y dirección. Al volver a
+  «solo catálogo» esos datos se limpian. Migración `0011_fulfillment_mode.sql`.
+- **Pruebas:** `npm test` pasa **16/16**; la última es
+  `tests/fulfillment.test.ts`.
 
 ---
 

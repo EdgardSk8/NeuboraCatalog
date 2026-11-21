@@ -45,6 +45,10 @@
 - Sesiones en cookie `__Host-tellez-session` (HttpOnly, `Secure`, SameSite).
 - Multiempresa: `tenants`, `tenant_memberships`, roles y aislamiento por tenant
   verificado en cada endpoint.
+- Alta en dos pasos: la configuración inicial pide nombre, giro, moneda y
+  teléfono. El país, la ciudad y la dirección se completan en **Configurar
+  cuenta**, junto con la forma de entrega (solo catálogo, tienda física,
+  delivery, retiro en tienda o envío a domicilio).
 - Productos: alta, edición, archivado reversible, restauración y paginación por
   cursor.
 - Perfiles de negocio: ropa/calzado, ferretería, productos sólidos e inventario
@@ -330,7 +334,8 @@ exige verificación.
 | `0007_phone_trial_plan.sql` | Teléfono y plan de prueba |
 | `0008_google_oauth.sql` | `oauth_accounts` (vínculo con Google por `sub`) |
 | `0009_email_verification.sql` | `email_verification_codes` (código de confirmación hasheado, vencimiento e intentos) |
-| `0010_disable_email_verification.sql` | Verifica las cuentas existentes y elimina códigos pendientes; el alta ya no exige confirmación |
+| `0010_disable_email_verification.sql` | Verifica las cuentas que existían en ese momento y elimina códigos pendientes |
+| `0011_fulfillment_mode.sql` | `fulfillment_mode` en `tenants`: cómo entrega el negocio (tienda, delivery, retiro, envío) |
 
 Reglas para quien continúe:
 
